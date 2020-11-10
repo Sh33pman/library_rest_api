@@ -15,6 +15,7 @@ const createUserTable = () => {
         password VARCHAR(100) NOT NULL
     )`;
 
+
     pool.query(createUserTableQuery)
         .then(res => {
             console.log(res);
@@ -68,7 +69,7 @@ const createCategoryTable = () => {
 const createBookTable = () => {
     const createBookTableQuery = `CREATE TABLE IF NOT EXISTS books
     (
-        isbn_number PRIMARY KEY,
+        isbn_number VARCHAR(100) PRIMARY KEY,
         name VARCHAR(100) NOT NULL,
         author VARCHAR(100) NOT NULL,
         year_published VARCHAR(100) NOT NULL
@@ -88,8 +89,8 @@ const createBookTable = () => {
 const createBookGenreTable = () => {
     const createBookGenreTableQuery = `CREATE TABLE IF NOT EXISTS book_genres
     (
-        category_id PRIMARY KEY,
-        isbn_number VARCHAR(100) NOT NULL,
+        category_id VARCHAR(100),
+        isbn_number VARCHAR(100),
         CONSTRAINT pk_category_group PRIMARY KEY (category_id,isbn_number)
     )`;
 
@@ -200,3 +201,5 @@ export {
     createAllTables,
     dropAllTables
 }
+
+require('make-runnable');

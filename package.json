@@ -4,6 +4,9 @@
   "description": "This is a small book library API intended to demonstrate understanding of NodeJs Rest APis, Swagger, Authentication, SQL Databases",
   "main": "index.js",
   "scripts": {
+    "create-dev-tables": "babel-node ./app/db/dev/db_connection createAllTables",
+    "start": "nodemon --watch . --exec babel-node -- server",
+    "setup": "npm-run-all -p start create-dev-tables",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -30,6 +33,9 @@
     "pg": "^8.4.2"
   },
   "devDependencies": {
+    "@babel/core": "^7.12.3",
+    "@babel/node": "^7.12.6",
+    "@babel/preset-env": "^7.12.1",
     "babel-cli": "^6.26.0",
     "babel-core": "^6.26.3",
     "babel-preset-env": "^1.7.0",
