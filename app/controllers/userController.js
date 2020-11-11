@@ -1,10 +1,8 @@
 // @ts-check
 import moment from 'moment';
-
 import dbQuery from '../db/dev/db_query';
 import {
-    hashPassword, comparePassword, isValidEmail, validatePassword,
-    isEmpty, generateUserToken
+    hashPassword, comparePassword, isValidEmail, validatePassword, isEmpty, generateUserToken
 } from '../helpers/validation';
 import { errorMessage, successMessage, status } from '../helpers/status';
 
@@ -32,7 +30,7 @@ const signupUser = async (req, res) => {
 
     const createUserQuery = `INSERT INTO
                             users(name, username, email, password)
-                            VALUES($1, $2, $3, $4, $5)
+                            VALUES($1, $2, $3, $4)
                             returning *`;
     const values = [name, username, email, hashedPassword];
 
@@ -57,6 +55,7 @@ const signupUser = async (req, res) => {
         }
 
         errorMessage.error = 'Operation was not successful';
+        console.log(error)
         return res.status(status.error).send(errorMessage);
     }
 };

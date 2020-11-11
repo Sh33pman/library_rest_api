@@ -50,7 +50,7 @@ const createCategoryTable = () => {
     const createCategoryTableQuery = `CREATE TABLE IF NOT EXISTS categories
     (
         category_id SERIAL PRIMARY KEY,
-        name VARCHAR(100) NOT NULL,
+        name VARCHAR(100) UNIQUE NOT NULL,
         description VARCHAR(100) NOT NULL
     )`;
 
@@ -65,7 +65,6 @@ const createCategoryTable = () => {
         })
 }
 
-// name, author, categories, isbn_number, year_published
 const createBookTable = () => {
     const createBookTableQuery = `CREATE TABLE IF NOT EXISTS books
     (
