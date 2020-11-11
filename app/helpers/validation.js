@@ -1,29 +1,31 @@
 // @ts-check
-// import env from '../../env';
 
-/**
-   * @param {string} email
-   * @returns {Boolean} 
-   */
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import env from '../../env';
+
+const saltRounds = 10;
+const salt = bcrypt.genSaltSync(saltRounds);
+const hashPassword = password => bcrypt.hashSync(password, salt);
+
+
+const comparePassword = (hashedPassword, password) => {
+    return bcrypt.compareSync(password, hashedPassword);
+};
+
+
 const isValidEmail = (email) => {
     const regEx = /\S+@\S+\.\S+/;
     return regEx.test(email);
 };
 
-/**
-   * @param {string} password
-   * @returns {Boolean} 
-   */
+
 const validatePassword = (password) => {
     if (password.length <= 5 || password === '') {
         return false;
     } return true;
 };
 
-/**
-   * @param {string, integer} input
-   * @returns {Boolean} 
-   */
 const isEmpty = (input) => {
     if (input === undefined || input === '') {
         return true;
@@ -33,19 +35,34 @@ const isEmpty = (input) => {
     } return true;
 };
 
-/**
-   * @param {string, integer} input
-   * @returns {Boolean} 
-   */
+
 const empty = (input) => {
     if (input === undefined || input === '') {
         return true;
     }
 };
 
+
+const generateUserToken = (email, user_id, name, username) => {
+    const token = jwt.sign(
+        {
+            email,
+            user_id,
+            name,
+            username,
+        },
+        env.secret, { expiresIn: '1d' });
+
+    return token;
+};
+
+
 export {
+    hashPassword,
+    comparePassword,
     isValidEmail,
     validatePassword,
     isEmpty,
-    empty
+    empty,
+    generateUserToken,
 };
