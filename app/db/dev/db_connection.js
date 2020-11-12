@@ -5,7 +5,20 @@ pool.on('connect', () => {
     console.log('Conneted to DB')
 });
 
-const createUserTable = () => {
+
+const usePool = async (query) => {
+    try {
+
+        const res = await pool.query(query);
+        console.log(res);
+    } catch (error) {
+        console.log(error);
+        pool.end();
+        return null
+    }
+}
+
+const createUserTable = async () => {
     const createUserTableQuery = `CREATE TABLE IF NOT EXISTS users
     (
         user_id SERIAL PRIMARY KEY,
@@ -16,18 +29,20 @@ const createUserTable = () => {
     )`;
 
 
-    pool.query(createUserTableQuery)
-        .then(res => {
-            console.log(res);
-            pool.end();
-        })
-        .catch(err => {
-            console.log(err);
-            pool.end();
-        })
+    return await usePool(createUserTableQuery)
+
+    // pool.query(createUserTableQuery)
+    //     .then(res => {
+    //         console.log(res);
+    //         pool.end();
+    //     })
+    //     .catch(err => {
+    //         console.log(err);
+    //         pool.end();
+    //     })
 }
 
-const createAuthorTable = () => {
+const createAuthorTable = async () => {
     const createAuthorTableQuery = `CREATE TABLE IF NOT EXISTS authors
     (
         author_id SERIAL PRIMARY KEY,
@@ -35,18 +50,20 @@ const createAuthorTable = () => {
         last_name VARCHAR(100) NOT NULL
     )`;
 
-    pool.query(createAuthorTableQuery)
-        .then(res => {
-            console.log(res);
-            pool.end();
-        })
-        .catch(err => {
-            console.log(err);
-            pool.end();
-        })
+    return await usePool(createAuthorTableQuery)
+
+    // pool.query(createAuthorTableQuery)
+    //     .then(res => {
+    //         console.log(res);
+    //         pool.end();
+    //     })
+    //     .catch(err => {
+    //         console.log(err);
+    //         pool.end();
+    //     })
 }
 
-const createCategoryTable = () => {
+const createCategoryTable = async () => {
     const createCategoryTableQuery = `CREATE TABLE IF NOT EXISTS categories
     (
         category_id SERIAL PRIMARY KEY,
@@ -54,18 +71,20 @@ const createCategoryTable = () => {
         description VARCHAR(100) NOT NULL
     )`;
 
-    pool.query(createCategoryTableQuery)
-        .then(res => {
-            console.log(res);
-            pool.end();
-        })
-        .catch(err => {
-            console.log(err);
-            pool.end();
-        })
+    return await usePool(createCategoryTableQuery)
+
+    // pool.query(createCategoryTableQuery)
+    //     .then(res => {
+    //         console.log(res);
+    //         pool.end();
+    //     })
+    //     .catch(err => {
+    //         console.log(err);
+    //         pool.end();
+    //     })
 }
 
-const createBookTable = () => {
+const createBookTable = async () => {
     const createBookTableQuery = `CREATE TABLE IF NOT EXISTS books
     (
         isbn_number VARCHAR(100) PRIMARY KEY,
@@ -77,36 +96,40 @@ const createBookTable = () => {
 
     )`;
 
-    pool.query(createBookTableQuery)
-        .then(res => {
-            console.log(res);
-            pool.end();
-        })
-        .catch(err => {
-            console.log(err);
-            pool.end();
-        })
+    return await usePool(createBookTableQuery)
+
+    // pool.query(createBookTableQuery)
+    //     .then(res => {
+    //         console.log(res);
+    //         pool.end();
+    //     })
+    //     .catch(err => {
+    //         console.log(err);
+    //         pool.end();
+    //     })
 }
 
-const createBookCategoryTable = () => {
+const createBookCategoryTable = async () => {
     const createBookCategoryTableQuery = `CREATE TABLE IF NOT EXISTS book_categories
     (
         category_id INT,
         isbn_number VARCHAR(100),
         CONSTRAINT pk_category_group PRIMARY KEY (category_id,isbn_number),
-        CONSTRAINT fk_category FOREIGN KEY(category_id) REFERENCES authors(category_id),
+        CONSTRAINT fk_category FOREIGN KEY(category_id) REFERENCES categories(category_id),
         CONSTRAINT fk_isbn_number FOREIGN KEY(isbn_number) REFERENCES books(isbn_number)
     )`;
 
-    pool.query(createBookCategoryTableQuery)
-        .then(res => {
-            console.log(res);
-            pool.end();
-        })
-        .catch(err => {
-            console.log(err);
-            pool.end();
-        })
+    return await usePool(createBookCategoryTableQuery)
+
+    // pool.query(createBookCategoryTableQuery)
+    //     .then(res => {
+    //         console.log(res);
+    //         pool.end();
+    //     })
+    //     .catch(err => {
+    //         console.log(err);
+    //         pool.end();
+    //     })
 }
 
 
@@ -165,8 +188,8 @@ const dropBookTable = () => {
 };
 
 
-const dropBookGenreTable = () => {
-    const dropBookGenreTableQuery = 'DROP TABLE IF EXISTS book_genres';
+const dropBookCategoryTable = () => {
+    const dropBookGenreTableQuery = 'DROP TABLE IF EXISTS book_categories';
     pool.query(dropBookGenreTableQuery)
         .then((res) => {
             console.log(res);
@@ -179,12 +202,21 @@ const dropBookGenreTable = () => {
 };
 
 
-const createAllTables = () => {
-    createUserTable();
-    createAuthorTable();
-    createCategoryTable();
-    createBookTable();
-    createBookCategoryTable();
+const createAllTables = async () => {
+
+    await createUserTable();
+    await createAuthorTable();
+    await createCategoryTable();
+    await createBookTable();
+    await createBookCategoryTable();
+
+    pool.end();
+
+    // createUserTable();
+    // createAuthorTable();
+    // createCategoryTable();
+    // createBookTable();
+    // createBookCategoryTable();
 }
 
 
@@ -193,13 +225,19 @@ const dropAllTables = () => {
     dropAuthorTable();
     dropCategoryTable();
     dropBookTable();
-    dropBookGenreTable();
+    dropBookCategoryTable();
 }
 
 pool.on('remove', () => {
     console.log('user removed');
     process.exit(0);
 })
+
+
+// module.exports = {
+//     createAllTables,
+//     // dropAllTables
+// }
 
 export {
     createAllTables,

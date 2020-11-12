@@ -3,6 +3,7 @@ import moment from 'moment';
 import dbQuery from '../db/dev/db_Query';
 import { empty } from '../helpers/validation';
 import { errorMessage, successMessage, status } from '../helpers/status';
+import pool from '../db/dev/pool';
 
 // isbn_number VARCHAR(100) PRIMARY KEY,
 // name VARCHAR(100) NOT NULL,
@@ -14,6 +15,7 @@ import { errorMessage, successMessage, status } from '../helpers/status';
 // ■ /book/{id} - PUT - update a book
 // ■ /book - GET - retrieve books allowing filtering and paging
 // ■ /book/{id} - GET - retrieve a specific book
+
 const createBook = async (req, res) => {
     const { author, name, categories, isbn_number, year_published } = req.body;
 
@@ -22,31 +24,38 @@ const createBook = async (req, res) => {
         return res.status(status.bad).send(errorMessage);
     }
 
-    if (categories.length > 0) {
+    if (categories.length <= 0) {
         errorMessage.error = 'Categories is required required';
         return res.status(status.bad).send(errorMessage);
     }
 
 
     try {
+        // Start Transaction
+        await pool.query("BEGIN");
 
         const createBookQuery = `INSERT INTO  books(isbn_number, name, author, year_published) VALUES($1, $2, $3, $4) returning *`;
         const values = [isbn_number, name, author, year_published];
+
+        console.log(createBookQuery)
 
         const { rows } = await dbQuery.query(createBookQuery, values);
         const dbResponse = rows[0];
 
         let bookCategoryRes = await insertBookCategory(req, res);
 
-        if (!bookCategoryRes) {
-            errorMessage.error = 'Unable to create Book';
+        if (bookCategoryRes !== 1) {
+            pool.query("ROLLBACK");
+            errorMessage.error = bookCategoryRes.message;
             return res.status(status.error).send(errorMessage);
         }
 
         successMessage.data = dbResponse;
+        pool.query("COMMIT");
         return res.status(status.created).send(successMessage);
 
     } catch (error) {
+        pool.query("ROLLBACK");
         if (error.routine === '_bt_check_unique') {
             errorMessage.error = 'This book ISBN has been created already';
             return res.status(status.conflict).send(errorMessage);
@@ -59,95 +68,116 @@ const createBook = async (req, res) => {
 
 
 const insertBookCategory = async (req, res) => {
-    const { author, name, categories, isbn_number, year_published } = req.body;
+    const { categories, isbn_number, } = req.body;
 
     try {
 
         let insertBookCategoryQuery = `INSERT INTO  book_categories(category_id, isbn_number) VALUES`;
-        categories.array.forEach((category, idx) => {
-            insertBookCategoryQuery += `('${category}', '${isbn_number}') `
+        console.log(categories);
+        (categories || []).forEach((category, idx) => {
+            insertBookCategoryQuery += `(${category}, '${isbn_number}') `
             if (!(idx === (categories.length - 1))) {
                 insertBookCategoryQuery += `, `
             }
         });
 
-        console.log(insertBookCategoryQuery)
-
         const { rows } = await dbQuery.query(insertBookCategoryQuery);
+        console.log(rows)
 
-        return rows[0];
+        return 1;
     } catch (error) {
-        console.log(error)
-        errorMessage.error = 'Unable to create Book';
-        return res.status(status.error).send(errorMessage);
+
+        // name: 'error',
+        // severity: 'ERROR',
+        // code: '23503',
+        // detail: 'Key (category_id)=(2) is not present in table "categories".',
+        // hint: undefined,
+        // position: undefined,
+        // internalPosition: undefined,
+        // internalQuery: undefined,
+        // where: undefined,
+        // schema: 'public',
+        // table: 'book_categories',
+        // column: undefined,
+        // dataType: undefined,
+        // constraint: 'fk_category',
+        // file: 'ri_triggers.c',
+        // line: '3266',
+        // routine: 'ri_ReportViolation'
+        if (error.code === '23503') {
+            error.message = `FOREIGN KEY VIOLATION `;
+            error.constraint === 'fk_category' ? error.message += `. One of the categories does does not exist on the categories table` : error.message += `. The ISBN does not exist on table books`
+        }
+        // console.log(error)
+        return error
     }
 }
 
 
-const getAllBooks = async (req, res) => {
-    // const { first_name, last_name } = req.body;
+// const getAllBooks = async (req, res) => {
+//     // const { first_name, last_name } = req.body;
 
-    const getAllBooksQuery = 'SELECT * FROM books ORDER BY name DESC';
-    try {
-        const { rows } = await dbQuery.query(getAllBooksQuery);
-        const dbResponse = rows;
+//     const getAllBooksQuery = 'SELECT * FROM books ORDER BY name DESC';
+//     try {
+//         const { rows } = await dbQuery.query(getAllBooksQuery);
+//         const dbResponse = rows;
 
-        if (dbResponse[0] === undefined) {
-            errorMessage.error = 'No Books found';
-            return res.status(status.bad).send(errorMessage);
-        }
+//         if (dbResponse[0] === undefined) {
+//             errorMessage.error = 'No Books found';
+//             return res.status(status.bad).send(errorMessage);
+//         }
 
-        successMessage.data = dbResponse;
-        return res.status(status.success).send(successMessage);
-    } catch (error) {
-        console.log(error)
-        errorMessage.error = 'An error occured while trying to fetch books';
-        return res.status(status.error).send(errorMessage);
-    }
-};
+//         successMessage.data = dbResponse;
+//         return res.status(status.success).send(successMessage);
+//     } catch (error) {
+//         console.log(error)
+//         errorMessage.error = 'An error occured while trying to fetch books';
+//         return res.status(status.error).send(errorMessage);
+//     }
+// };
 
-const getBook = async (req, res) => {
-    const { book_id } = req.params;
-
-
-    try {
-        const getAllBooksQuery = `SELECT * FROM books WHERE book_id=$1 ORDER BY first_name DESC`;
-        const { rows } = await dbQuery.query(getAllBooksQuery, [book_id]);
-        const dbResponse = rows;
-
-        if (dbResponse[0] === undefined) {
-            errorMessage.error = 'No Books found';
-            return res.status(status.bad).send(errorMessage);
-        }
-
-        successMessage.data = dbResponse;
-        return res.status(status.success).send(successMessage);
-    } catch (error) {
-        console.log(error)
-        errorMessage.error = 'An error occured while trying to fetch books';
-        return res.status(status.error).send(errorMessage);
-    }
-    // const { book_id } = req.params;
+// const getBook = async (req, res) => {
+//     const { book_id } = req.params;
 
 
-    // try {
-    //     const getAllBooksQuery = `SELECT * FROM books WHERE book_id=$1 ORDER BY first_name DESC`;
-    //     const { rows } = await dbQuery.query(getAllBooksQuery, [book_id]);
-    //     const dbResponse = rows;
+//     try {
+//         const getAllBooksQuery = `SELECT * FROM books WHERE book_id=$1 ORDER BY first_name DESC`;
+//         const { rows } = await dbQuery.query(getAllBooksQuery, [book_id]);
+//         const dbResponse = rows;
 
-    //     if (dbResponse[0] === undefined) {
-    //         errorMessage.error = 'No Books found';
-    //         return res.status(status.bad).send(errorMessage);
-    //     }
+//         if (dbResponse[0] === undefined) {
+//             errorMessage.error = 'No Books found';
+//             return res.status(status.bad).send(errorMessage);
+//         }
 
-    //     successMessage.data = dbResponse;
-    //     return res.status(status.success).send(successMessage);
-    // } catch (error) {
-    //     console.log(error)
-    //     errorMessage.error = 'An error occured while trying to fetch books';
-    //     return res.status(status.error).send(errorMessage);
-    // }
-};
+//         successMessage.data = dbResponse;
+//         return res.status(status.success).send(successMessage);
+//     } catch (error) {
+//         console.log(error)
+//         errorMessage.error = 'An error occured while trying to fetch books';
+//         return res.status(status.error).send(errorMessage);
+//     }
+// const { book_id } = req.params;
+
+
+// try {
+//     const getAllBooksQuery = `SELECT * FROM books WHERE book_id=$1 ORDER BY first_name DESC`;
+//     const { rows } = await dbQuery.query(getAllBooksQuery, [book_id]);
+//     const dbResponse = rows;
+
+//     if (dbResponse[0] === undefined) {
+//         errorMessage.error = 'No Books found';
+//         return res.status(status.bad).send(errorMessage);
+//     }
+
+//     successMessage.data = dbResponse;
+//     return res.status(status.success).send(successMessage);
+// } catch (error) {
+//     console.log(error)
+//     errorMessage.error = 'An error occured while trying to fetch books';
+//     return res.status(status.error).send(errorMessage);
+// }
+// };
 
 
 // const deleteBook = async (req, res) => {
@@ -203,8 +233,8 @@ const getBook = async (req, res) => {
 
 export {
     createBook,
-    getAllBooks,
-    getBook,
-    deleteBook,
-    updateBook,
+    // getAllBooks,
+    // getBook,
+    // deleteBook,
+    // updateBook,
 };
