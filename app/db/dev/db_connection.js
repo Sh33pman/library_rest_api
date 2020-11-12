@@ -70,8 +70,11 @@ const createBookTable = () => {
     (
         isbn_number VARCHAR(100) PRIMARY KEY,
         name VARCHAR(100) NOT NULL,
-        author VARCHAR(100) NOT NULL,
-        year_published VARCHAR(100) NOT NULL
+        author INT NOT NULL,
+        year_published VARCHAR(100) NOT NULL,
+        CONSTRAINT fk_author 
+        FOREIGN KEY(author) REFERENCES authors(author_id) 
+
     )`;
 
     pool.query(createBookTableQuery)
@@ -85,15 +88,17 @@ const createBookTable = () => {
         })
 }
 
-const createBookGenreTable = () => {
-    const createBookGenreTableQuery = `CREATE TABLE IF NOT EXISTS book_genres
+const createBookCategoryTable = () => {
+    const createBookCategoryTableQuery = `CREATE TABLE IF NOT EXISTS book_categories
     (
-        category_id VARCHAR(100),
+        category_id INT,
         isbn_number VARCHAR(100),
-        CONSTRAINT pk_category_group PRIMARY KEY (category_id,isbn_number)
+        CONSTRAINT pk_category_group PRIMARY KEY (category_id,isbn_number),
+        CONSTRAINT fk_category FOREIGN KEY(category_id) REFERENCES authors(category_id),
+        CONSTRAINT fk_isbn_number FOREIGN KEY(isbn_number) REFERENCES books(isbn_number)
     )`;
 
-    pool.query(createBookGenreTableQuery)
+    pool.query(createBookCategoryTableQuery)
         .then(res => {
             console.log(res);
             pool.end();
@@ -179,7 +184,7 @@ const createAllTables = () => {
     createAuthorTable();
     createCategoryTable();
     createBookTable();
-    createBookGenreTable();
+    createBookCategoryTable();
 }
 
 
