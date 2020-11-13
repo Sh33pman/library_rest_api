@@ -44,17 +44,20 @@ const createCategory = async (req, res) => {
 
 
 const getAllCategories = async (req, res) => {
-    // const { name, description } = req.body;
 
-    const getAllCategoriesQuery = 'SELECT * FROM categories ORDER BY name DESC';
+
+
     try {
+        // const getAllCategoriesQuery = 'SELECT * FROM categories ORDER BY name DESC';
+        let getAllCategoriesQuery = buildGetAllCategoriesQuery(req.query)
+
         const { rows } = await dbQuery.query(getAllCategoriesQuery);
         const dbResponse = rows;
 
-        if (dbResponse[0] === undefined) {
-            errorMessage.error = 'No categories found';
-            return res.status(status.bad).send(errorMessage);
-        }
+        // if (dbResponse[0] === undefined) {
+        //     errorMessage.error = 'No categories found';
+        //     return res.status(status.bad).send(errorMessage);
+        // }
 
         successMessage.data = dbResponse;
         return res.status(status.success).send(successMessage);
@@ -64,6 +67,28 @@ const getAllCategories = async (req, res) => {
         return res.status(status.error).send(errorMessage);
     }
 };
+
+function buildGetAllCategoriesQuery(payload) {
+    const { limit, offset, name } = payload;
+    let query = 'SELECT * FROM categories ';
+
+    if (name) {
+        query += ` WHERE LOWER(name) LIKE LOWER('%${name}%') `
+    }
+
+    query += ` ORDER BY name DESC `;
+
+    if (limit) {
+        query += ` LIMIT ${limit}`
+    }
+
+    if (offset) {
+        query += ` OFFSET ${offset}`
+    }
+
+    return query;
+
+}
 
 const getCategory = async (req, res) => {
     const { category_id } = req.params;
