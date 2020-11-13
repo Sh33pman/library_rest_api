@@ -1,7 +1,7 @@
 // @ts-check
 import moment from 'moment';
 import dbQuery from '../db/dev/db_Query';
-import { empty } from '../helpers/validation';
+import { empty, isEmpty } from '../helpers/validation';
 import { errorMessage, successMessage, status } from '../helpers/status';
 
 
@@ -46,17 +46,17 @@ const createAuthor = async (req, res) => {
 
 
 const getAllAuthors = async (req, res) => {
-    // const { first_name, last_name } = req.body;
 
-    const getAllAuthorsQuery = 'SELECT * FROM authors ORDER BY first_name DESC';
     try {
+        // const getAllAuthorsQuery = 'SELECT * FROM authors ORDER BY first_name DESC';
+        const getAllAuthorsQuery = buildGetAllAuthorsQuery(req.query)
         const { rows } = await dbQuery.query(getAllAuthorsQuery);
         const dbResponse = rows;
 
-        if (dbResponse[0] === undefined) {
-            errorMessage.error = 'No Authors found';
-            return res.status(status.bad).send(errorMessage);
-        }
+        // if (dbResponse[0] === undefined) {
+        //     errorMessage.error = 'No Authors found';
+        //     return res.status(status.bad).send(errorMessage);
+        // }
 
         successMessage.data = dbResponse;
         return res.status(status.success).send(successMessage);
@@ -66,6 +66,39 @@ const getAllAuthors = async (req, res) => {
         return res.status(status.error).send(errorMessage);
     }
 };
+
+function buildGetAllAuthorsQuery(payload) {
+    const { limit, offset, last_name, first_name } = payload;
+    let query = `SELECT * FROM authors `;
+
+    let isSearchCriteriaProvided = !(isEmpty(last_name) && isEmpty(first_name));
+
+    if (isSearchCriteriaProvided) {
+        query += `WHERE `
+
+        if (first_name) {
+            query += `  LOWER(first_name) LIKE LOWER('%${first_name}%') `
+        }
+
+        if (last_name) {
+            query += `${first_name ? "OR " : ""} LOWER(last_name) LIKE LOWER('%${last_name}%') `
+        }
+    }
+
+    query += ` ORDER BY first_name DESC `;
+
+    if (limit) {
+        query += ` LIMIT ${limit}`
+    }
+
+    if (offset) {
+        query += ` OFFSET ${offset}`
+    }
+
+    return query
+
+
+}
 
 const getAuthor = async (req, res) => {
     const { author_id } = req.params;

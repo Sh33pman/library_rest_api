@@ -210,7 +210,6 @@ async function getCategoriesByISBN(isbn_number) {
     }
 }
 
-
 const deleteBook = async (req, res) => {
     const { isbn_number } = req.params;
 
