@@ -51,7 +51,7 @@ const generateUserToken = (email, user_id, name, username) => {
             name,
             username,
         },
-        env.secret, { expiresIn: '1d' });
+        env.secret, { expiresIn: '5d' });
 
     return token;
 };

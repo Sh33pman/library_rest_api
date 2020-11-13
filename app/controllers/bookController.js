@@ -1,7 +1,7 @@
 // @ts-check
 import moment from 'moment';
 import dbQuery from '../db/dev/db_Query';
-import { empty } from '../helpers/validation';
+import { empty, isEmpty } from '../helpers/validation';
 import { errorMessage, successMessage, status } from '../helpers/status';
 import pool from '../db/dev/pool';
 
@@ -60,6 +60,7 @@ const createBook = async (req, res) => {
             errorMessage.error = 'This book ISBN has been created already';
             return res.status(status.conflict).send(errorMessage);
         }
+
         console.log(error)
         errorMessage.error = 'Unable to create Book';
         return res.status(status.error).send(errorMessage);
@@ -71,70 +72,110 @@ const insertBookCategory = async (req, res) => {
     const { categories, isbn_number, } = req.body;
 
     try {
-
         let insertBookCategoryQuery = `INSERT INTO  book_categories(category_id, isbn_number) VALUES`;
-        console.log(categories);
-        (categories || []).forEach((category, idx) => {
-            insertBookCategoryQuery += `(${category}, '${isbn_number}') `
-            if (!(idx === (categories.length - 1))) {
-                insertBookCategoryQuery += `, `
-            }
-        });
-
+        insertBookCategoryQuery += buildCategoryInsertQuery(categories, isbn_number)
         const { rows } = await dbQuery.query(insertBookCategoryQuery);
-        console.log(rows)
 
         return 1;
     } catch (error) {
-
-        // name: 'error',
-        // severity: 'ERROR',
-        // code: '23503',
-        // detail: 'Key (category_id)=(2) is not present in table "categories".',
-        // hint: undefined,
-        // position: undefined,
-        // internalPosition: undefined,
-        // internalQuery: undefined,
-        // where: undefined,
-        // schema: 'public',
-        // table: 'book_categories',
-        // column: undefined,
-        // dataType: undefined,
-        // constraint: 'fk_category',
-        // file: 'ri_triggers.c',
-        // line: '3266',
-        // routine: 'ri_ReportViolation'
         if (error.code === '23503') {
             error.message = `FOREIGN KEY VIOLATION `;
             error.constraint === 'fk_category' ? error.message += `. One of the categories does does not exist on the categories table` : error.message += `. The ISBN does not exist on table books`
         }
-        // console.log(error)
         return error
     }
 }
 
+function buildCategoryInsertQuery(categories, isbn_number) {
+    let insertBookCategoryQuery = ``;
 
-// const getAllBooks = async (req, res) => {
-//     // const { first_name, last_name } = req.body;
+    (categories || []).forEach((category, idx) => {
+        insertBookCategoryQuery += `(${category}, '${isbn_number}') `;
+        let isLastItem = idx === (categories.length - 1);
 
-//     const getAllBooksQuery = 'SELECT * FROM books ORDER BY name DESC';
-//     try {
-//         const { rows } = await dbQuery.query(getAllBooksQuery);
-//         const dbResponse = rows;
+        if (!isLastItem) {
+            insertBookCategoryQuery += `, `
+        }
 
-//         if (dbResponse[0] === undefined) {
-//             errorMessage.error = 'No Books found';
-//             return res.status(status.bad).send(errorMessage);
-//         }
+    });
 
-//         successMessage.data = dbResponse;
-//         return res.status(status.success).send(successMessage);
-//     } catch (error) {
-//         console.log(error)
-//         errorMessage.error = 'An error occured while trying to fetch books';
-//         return res.status(status.error).send(errorMessage);
-//     }
-// };
+    return insertBookCategoryQuery;
+}
+
+const getAllBooks = async (req, res) => {
+    const { limit, offset } = req.query;
+
+    try {
+        let getAllBooksQuery = `select b.isbn_number, b.name as book_name, b.year_published,
+		a.first_name as author_name, a.last_name as author_last_name,
+		c.category_id, c.name as category_name, c.description as category_description
+FROM books AS b 
+JOIN authors AS a ON b.author = a.author_id
+JOIN book_categories AS bc ON bc.isbn_number = b.isbn_number
+JOIN categories AS c ON c.category_id = bc.category_id
+WHERE  	1=1 `;
+
+        if (isSearchCriteriaProvided(req.query)) {
+            getAllBooksQuery += `AND (`
+            getAllBooksQuery += buildSearchCriteriaQuery(req.query)
+            getAllBooksQuery += `)`;
+        }
+
+        getAllBooksQuery += ` ORDER BY b.name DESC `;
+
+        if (limit) {
+            getAllBooksQuery += ` LIMIT ${limit}`
+        }
+
+        if (offset) {
+            getAllBooksQuery += ` OFFSET ${offset}`
+        }
+
+        const { rows } = await dbQuery.query(getAllBooksQuery);
+        const dbResponse = rows;
+
+        successMessage.data = dbResponse;
+        return res.status(status.success).send(successMessage);
+    } catch (error) {
+        console.log(error)
+        errorMessage.error = 'An error occured while trying to fetch books';
+        return res.status(status.error).send(errorMessage);
+    }
+}
+
+function buildSearchCriteriaQuery(parms) {
+    const { author_first_name, author_last_name, book_name, isbn_number, year_published, limit, offset } = parms
+    let searchCriteria = ``;
+
+    if (author_first_name) {
+        searchCriteria += `LOWER(a.first_name) LIKE LOWER('%${author_first_name}%') `
+    }
+
+    if (author_last_name) {
+        searchCriteria += ` ${searchCriteria !== '' ? "OR " : ""} LOWER(a.last_name) LIKE LOWER('%${author_last_name}%') `
+    }
+
+    if (book_name) {
+        searchCriteria += `${searchCriteria !== '' ? "OR " : ""} LOWER(b.name) LIKE LOWER('%${book_name}%')`
+    }
+
+    if (isbn_number) {
+        searchCriteria += `${searchCriteria !== '' ? "OR " : ""} b.isbn_number LIKE '%${isbn_number}%' `
+    }
+
+    if (year_published) {
+        searchCriteria += ` ${searchCriteria !== '' ? "OR " : ""} b.year_published LIKE '%${year_published}%' `
+    }
+
+    return searchCriteria;
+}
+
+function isSearchCriteriaProvided(params) {
+    const { author_first_name, author_last_name, book_name, isbn_number, year_published } = params
+    return !(isEmpty(author_first_name) && isEmpty(author_last_name) && isEmpty(book_name) && isEmpty(isbn_number) && isEmpty(year_published))
+
+
+}
 
 // const getBook = async (req, res) => {
 //     const { book_id } = req.params;
@@ -233,7 +274,7 @@ const insertBookCategory = async (req, res) => {
 
 export {
     createBook,
-    // getAllBooks,
+    getAllBooks,
     // getBook,
     // deleteBook,
     // updateBook,

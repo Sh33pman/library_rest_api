@@ -1,6 +1,6 @@
 // @ts-check
 import express from 'express';
-import { createBook } from '../controllers/bookController';
+import { createBook, getAllBooks } from '../controllers/bookController';
 import verifyAuth from '../middlewares/auth';
 
 const router = express.Router();
@@ -11,7 +11,7 @@ const router = express.Router();
 // ■ /book - GET - retrieve books allowing filtering and paging
 // ■ /book/{id} - GET - retrieve a specific book
 router.post('/book', verifyAuth, createBook);
-// router.get('/book', verifyAuth, getAllCategories);
+router.get('/book', verifyAuth, getAllBooks);
 // router.get('/book/:book_id', verifyAuth, getCategory);
 // router.delete('/book/:book_id', verifyAuth, deleteCategory);
 // router.put('/book/:book_id', verifyAuth, updateCategory);
