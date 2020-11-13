@@ -211,28 +211,35 @@ async function getCategoriesByISBN(isbn_number) {
 }
 
 
-// const deleteBook = async (req, res) => {
-//     const { isbn_number } = req.params;
+const deleteBook = async (req, res) => {
+    const { isbn_number } = req.params;
 
-//     try {
-//         const deleteBookQuery = 'DELETE FROM books WHERE isbn_number=$1 returning *';
-//         const { rows } = await dbQuery.query(deleteBookQuery, [isbn_number]);
-//         const dbResponse = rows[0];
+    try {
+        await pool.query("BEGIN");
 
-//         if (!dbResponse) {
-//             errorMessage.error = 'There is no book with this Id';
-//             return res.status(status.notfound).send(errorMessage);
-//         }
+        const deleteBookCategories = 'DELETE FROM book_categories WHERE isbn_number=$1 returning *';
+        const deletedBookCategories = await dbQuery.query(deleteBookCategories, [isbn_number]);
 
-//         successMessage.data = {};
-//         successMessage.data.message = 'Book deleted successfully';
-//         return res.status(status.success).send(successMessage);
-//     } catch (error) {
-//         console.log(error)
-//         errorMessage.error = 'Failed to delete Book';
-//         return res.status(status.error).send(error);
-//     }
-// };
+        const deleteBookQuery = 'DELETE FROM books WHERE isbn_number=$1 returning *';
+        const { rows } = await dbQuery.query(deleteBookQuery, [isbn_number]);
+        const dbResponse = rows[0];
+
+        if (!dbResponse) {
+            errorMessage.error = 'There is no book with this Id';
+            return res.status(status.notfound).send(errorMessage);
+        }
+
+        successMessage.data = {};
+        successMessage.data.message = 'Book deleted successfully';
+        pool.query("COMMIT");
+        return res.status(status.success).send(successMessage);
+    } catch (error) {
+        console.log(error);
+        errorMessage.error = 'Failed to delete Book';
+        pool.query("ROLLBACK");
+        return res.status(status.error).send(error);
+    }
+};
 
 const updateBook = async (req, res) => {
     const { isbn_number } = req.params;
@@ -316,5 +323,5 @@ export {
     getAllBooks,
     getBook,
     updateBook,
-    // deleteBook,
+    deleteBook,
 };
