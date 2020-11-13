@@ -1,6 +1,6 @@
 // @ts-check
 import express from 'express';
-import { createBook, getAllBooks } from '../controllers/bookController';
+import { createBook, getAllBooks, getBook } from '../controllers/bookController';
 import verifyAuth from '../middlewares/auth';
 
 const router = express.Router();
@@ -12,7 +12,7 @@ const router = express.Router();
 // ■ /book/{id} - GET - retrieve a specific book
 router.post('/book', verifyAuth, createBook);
 router.get('/book', verifyAuth, getAllBooks);
-// router.get('/book/:book_id', verifyAuth, getCategory);
+router.get('/book/:isbn_number', verifyAuth, getBook);
 // router.delete('/book/:book_id', verifyAuth, deleteCategory);
 // router.put('/book/:book_id', verifyAuth, updateCategory);
 

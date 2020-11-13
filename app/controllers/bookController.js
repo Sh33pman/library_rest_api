@@ -177,56 +177,30 @@ function isSearchCriteriaProvided(params) {
 
 }
 
-// const getBook = async (req, res) => {
-//     const { book_id } = req.params;
+const getBook = async (req, res) => {
+    const { isbn_number } = req.params;
 
+    try {
+        const getAllBooksQuery = `SELECT * FROM books WHERE isbn_number=$1 ORDER BY name DESC`;
+        const { rows } = await dbQuery.query(getAllBooksQuery, [isbn_number]);
+        const dbResponse = rows;
 
-//     try {
-//         const getAllBooksQuery = `SELECT * FROM books WHERE book_id=$1 ORDER BY first_name DESC`;
-//         const { rows } = await dbQuery.query(getAllBooksQuery, [book_id]);
-//         const dbResponse = rows;
-
-//         if (dbResponse[0] === undefined) {
-//             errorMessage.error = 'No Books found';
-//             return res.status(status.bad).send(errorMessage);
-//         }
-
-//         successMessage.data = dbResponse;
-//         return res.status(status.success).send(successMessage);
-//     } catch (error) {
-//         console.log(error)
-//         errorMessage.error = 'An error occured while trying to fetch books';
-//         return res.status(status.error).send(errorMessage);
-//     }
-// const { book_id } = req.params;
-
-
-// try {
-//     const getAllBooksQuery = `SELECT * FROM books WHERE book_id=$1 ORDER BY first_name DESC`;
-//     const { rows } = await dbQuery.query(getAllBooksQuery, [book_id]);
-//     const dbResponse = rows;
-
-//     if (dbResponse[0] === undefined) {
-//         errorMessage.error = 'No Books found';
-//         return res.status(status.bad).send(errorMessage);
-//     }
-
-//     successMessage.data = dbResponse;
-//     return res.status(status.success).send(successMessage);
-// } catch (error) {
-//     console.log(error)
-//     errorMessage.error = 'An error occured while trying to fetch books';
-//     return res.status(status.error).send(errorMessage);
-// }
-// };
+        successMessage.data = dbResponse;
+        return res.status(status.success).send(successMessage);
+    } catch (error) {
+        console.log(error)
+        errorMessage.error = 'An error occured while trying to fetch book';
+        return res.status(status.error).send(errorMessage);
+    }
+};
 
 
 // const deleteBook = async (req, res) => {
-//     const { book_id } = req.params;
+//     const { isbn_number } = req.params;
 
 //     try {
-//         const deleteBookQuery = 'DELETE FROM books WHERE book_id=$1 returning *';
-//         const { rows } = await dbQuery.query(deleteBookQuery, [book_id]);
+//         const deleteBookQuery = 'DELETE FROM books WHERE isbn_number=$1 returning *';
+//         const { rows } = await dbQuery.query(deleteBookQuery, [isbn_number]);
 //         const dbResponse = rows[0];
 
 //         if (!dbResponse) {
@@ -246,13 +220,13 @@ function isSearchCriteriaProvided(params) {
 
 
 // const updateBook = async (req, res) => {
-//     const { book_id } = req.params;
+//     const { isbn_number } = req.params;
 //     const { first_name, last_name } = req.body;
 
 //     try {
 
-//         const updateBook = `UPDATE books SET first_name=$1, last_name=$2 WHERE book_id=$3 returning *`;
-//         const values = [first_name, last_name, book_id];
+//         const updateBook = `UPDATE books SET first_name=$1, last_name=$2 WHERE isbn_number=$3 returning *`;
+//         const values = [first_name, last_name, isbn_number];
 //         const response = await dbQuery.query(updateBook, values);
 //         const dbResult = response.rows[0];
 //         delete dbResult.password;
@@ -275,6 +249,7 @@ function isSearchCriteriaProvided(params) {
 export {
     createBook,
     getAllBooks,
+    getBook,
     // getBook,
     // deleteBook,
     // updateBook,
