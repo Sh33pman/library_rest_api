@@ -117,8 +117,6 @@ const updateCategory = async (req, res) => {
     const { category_id } = req.params;
     const { name, description } = req.body;
 
-    debugger
-
     try {
 
         const updateCategory = `UPDATE categories

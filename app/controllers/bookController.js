@@ -67,7 +67,6 @@ const createBook = async (req, res) => {
     }
 };
 
-
 const insertBookCategory = async (req, res) => {
     const { categories, isbn_number, } = req.body;
 
@@ -183,16 +182,33 @@ const getBook = async (req, res) => {
     try {
         const getAllBooksQuery = `SELECT * FROM books WHERE isbn_number=$1 ORDER BY name DESC`;
         const { rows } = await dbQuery.query(getAllBooksQuery, [isbn_number]);
-        const dbResponse = rows;
+        const dbResponse = rows[0];
+
+        dbResponse.categories = await getCategoriesByISBN(isbn_number)
 
         successMessage.data = dbResponse;
         return res.status(status.success).send(successMessage);
+
     } catch (error) {
         console.log(error)
         errorMessage.error = 'An error occured while trying to fetch book';
         return res.status(status.error).send(errorMessage);
     }
 };
+
+async function getCategoriesByISBN(isbn_number) {
+
+    try {
+        let insertBookCategoryQuery = `SELECT category_id FROM book_categories WHERE isbn_number = $1`;
+        const { rows } = await dbQuery.query(insertBookCategoryQuery, [isbn_number]);
+        let categories = (rows || []).map(item => item.category_id)
+        return categories;
+    } catch (error) {
+        console.log("Failed to get All categories")
+        console.log(error)
+        return [];
+    }
+}
 
 
 // const deleteBook = async (req, res) => {
@@ -218,39 +234,87 @@ const getBook = async (req, res) => {
 //     }
 // };
 
+const updateBook = async (req, res) => {
+    const { isbn_number } = req.params;
 
-// const updateBook = async (req, res) => {
-//     const { isbn_number } = req.params;
-//     const { first_name, last_name } = req.body;
+    try {
+        await pool.query("BEGIN");
+        let updateBookQuery = ``;
+        updateBookQuery += buildUpdateBookQuery(req.body, isbn_number)
 
-//     try {
+        const response = await dbQuery.query(updateBookQuery);
+        const dbResult = response.rows[0];
+        successMessage.data = dbResult;
 
-//         const updateBook = `UPDATE books SET first_name=$1, last_name=$2 WHERE isbn_number=$3 returning *`;
-//         const values = [first_name, last_name, isbn_number];
-//         const response = await dbQuery.query(updateBook, values);
-//         const dbResult = response.rows[0];
-//         delete dbResult.password;
-//         successMessage.data = dbResult;
-//         return res.status(status.success).send(successMessage);
+        let categories = await updateBookCategories(req.body, isbn_number)
 
-//     } catch (error) {
-//         console.log(error)
+        if (!categories || categories === null) {
+            pool.query("ROLLBACK");
+            errorMessage.error = 'Failed to update Book';
+            return res.status(status.error).send(errorMessage);
+        }
 
-//         // if (error.routine === '_bt_check_unique') {
-//         //     errorMessage.error = 'Name is taken already';
-//         //     return res.status(status.conflict).send(errorMessage);
-//         // }
+        successMessage.data.categories = categories
+        pool.query("COMMIT");
+        return res.status(status.success).send(successMessage);
+    } catch (error) {
+        console.log(error);
+        pool.query("ROLLBACK");
+        errorMessage.error = 'Failed to update Book';
+        return res.status(status.error).send(errorMessage);
+    }
+};
 
-//         errorMessage.error = 'Failed to update Book';
-//         return res.status(status.error).send(errorMessage);
-//     }
-// };
+function buildUpdateBookQuery(payload, isbn_number) {
+    const { author, name, categories, year_published } = payload;
+    let updateBookQuery = `UPDATE books SET `;
+    // let updateBookQuery = `UPDATE books SET first_name=$1, last_name=$2 WHERE isbn_number=$3 `;
+
+    if (author) {
+        updateBookQuery += ` author = ${author}, `;
+    }
+
+    if (name) {
+        updateBookQuery += ` name = '${name}', `;
+    }
+
+    if (year_published) {
+        updateBookQuery += ` year_published = '${year_published}'`;
+    }
+
+    updateBookQuery = updateBookQuery.replace(/,\s*$/, "");
+    updateBookQuery += ` WHERE isbn_number = '${isbn_number}'  returning *`;
+    return updateBookQuery;
+}
+
+async function updateBookCategories(payload, isbn_number) {
+    const { categories } = payload;
+    try {
+        let values = ``;
+        (categories || []).forEach(item => {
+            values += `(${item.new}, ${isbn_number}, ${item.old}),`
+        });
+
+        values = values.replace(/,\s*$/, "");
+
+        let updateBookCategoryQuery = `update public.book_categories as bc set
+        category_id = c.category_id
+        from (values ${values}) as c(category_id, isbn_number, old_category_id) 
+        where bc.isbn_number::int = c.isbn_number AND c.old_category_id = bc.category_id returning *`;
+
+        const { rows } = await dbQuery.query(updateBookCategoryQuery);
+        let result = (rows || []).map(item => item.category_id)
+        return result;
+    } catch (error) {
+        console.log(error);
+        return null
+    }
+}
 
 export {
     createBook,
     getAllBooks,
     getBook,
-    // getBook,
+    updateBook,
     // deleteBook,
-    // updateBook,
 };

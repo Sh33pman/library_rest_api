@@ -1,6 +1,6 @@
 // @ts-check
 import express from 'express';
-import { createBook, getAllBooks, getBook } from '../controllers/bookController';
+import { createBook, getAllBooks, getBook, updateBook } from '../controllers/bookController';
 import verifyAuth from '../middlewares/auth';
 
 const router = express.Router();
@@ -14,6 +14,6 @@ router.post('/book', verifyAuth, createBook);
 router.get('/book', verifyAuth, getAllBooks);
 router.get('/book/:isbn_number', verifyAuth, getBook);
 // router.delete('/book/:book_id', verifyAuth, deleteCategory);
-// router.put('/book/:book_id', verifyAuth, updateCategory);
+router.put('/book/:isbn_number', verifyAuth, updateBook);
 
 export default router;
