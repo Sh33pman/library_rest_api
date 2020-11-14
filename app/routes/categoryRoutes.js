@@ -2,14 +2,15 @@
 import express from 'express';
 import { createCategory, getAllCategories, getCategory, updateCategory, deleteCategory } from '../controllers/categoryController';
 import verifyAuth from '../middlewares/auth';
+import { createCategorySchema, updateCategorySchema, deleteCategorySchema, getCategorySchema, getAllCategorySchema } from '../schema/category';
 
 const router = express.Router();
 
-router.post('/category', verifyAuth, createCategory);
-router.get('/category', verifyAuth, getAllCategories);
-router.get('/category/:category_id', verifyAuth, getCategory);
-router.delete('/category/:category_id', verifyAuth, deleteCategory);
-router.put('/category/:category_id', verifyAuth, updateCategory);
+router.post('/category', verifyAuth, createCategorySchema, createCategory);
+router.get('/category', verifyAuth, getAllCategorySchema, getAllCategories);
+router.get('/category/:category_id', verifyAuth, getCategorySchema, getCategory);
+router.delete('/category/:category_id', verifyAuth, deleteCategorySchema, deleteCategory);
+router.put('/category/:category_id', verifyAuth, updateCategorySchema, updateCategory);
 
 export default router;
 // /category - POST - insert a new category with fields: name, description

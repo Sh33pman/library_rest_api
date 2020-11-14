@@ -8,15 +8,15 @@ import { errorMessage, successMessage, status } from '../helpers/status';
 const createCategory = async (req, res) => {
     const { name, description } = req.body;
 
-    if (empty(name)) {
-        errorMessage.error = 'Name is required';
-        return res.status(status.bad).send(errorMessage);
-    }
+    // if (empty(name)) {
+    //     errorMessage.error = 'Name is required';
+    //     return res.status(status.bad).send(errorMessage);
+    // }
 
-    if (empty(description)) {
-        errorMessage.error = 'description is required';
-        return res.status(status.bad).send(errorMessage);
-    }
+    // if (empty(description)) {
+    //     errorMessage.error = 'description is required';
+    //     return res.status(status.bad).send(errorMessage);
+    // }
 
     const createCategoryQuery = `INSERT INTO  categories(
                                 name, description)
@@ -44,8 +44,6 @@ const createCategory = async (req, res) => {
 
 
 const getAllCategories = async (req, res) => {
-
-
 
     try {
         // const getAllCategoriesQuery = 'SELECT * FROM categories ORDER BY name DESC';
@@ -97,12 +95,12 @@ const getCategory = async (req, res) => {
     try {
         const getAllCategoriesQuery = `SELECT * FROM categories WHERE category_id=$1 ORDER BY name DESC`;
         const { rows } = await dbQuery.query(getAllCategoriesQuery, [category_id]);
-        const dbResponse = rows;
+        const dbResponse = rows[0] || {};
 
-        if (dbResponse[0] === undefined) {
-            errorMessage.error = 'No categories found';
-            return res.status(status.bad).send(errorMessage);
-        }
+        // if (dbResponse[0] === undefined) {
+        //     errorMessage.error = 'No categories found';
+        //     return res.status(status.bad).send(errorMessage);
+        // }
 
         successMessage.data = dbResponse;
         return res.status(status.success).send(successMessage);
@@ -144,10 +142,8 @@ const updateCategory = async (req, res) => {
 
     try {
 
-        const updateCategory = `UPDATE categories
-                                    SET name=$1, description=$2
-                                    WHERE category_id=$3 
-                                    returning *`;
+        const updateCategory = `UPDATE categories SET name=$1, description=$2
+                                WHERE category_id=$3  returning *`;
         const values = [name, description, category_id];
         const response = await dbQuery.query(updateCategory, values);
         const dbResult = response.rows[0];
