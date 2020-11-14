@@ -1,21 +1,20 @@
 // @ts-check
 const Joi = require('joi');
 
-
-const createCategorySchema = (req, res, next) => {
+const createAuthorSchema = (req, res, next) => {
 
     const schema = Joi.object().keys({
-        name: Joi.string().required(),
-        description: Joi.string().required()
+        first_name: Joi.string().required(),
+        last_name: Joi.string().required()
     });
 
     validateRequest(req.body, res, next, schema);
 };
 
-const updateCategorySchema = (req, res, next) => {
+const updateAuthorSchema = (req, res, next) => {
 
     const params = Joi.object().keys({
-        category_id: Joi.number().required()
+        author_id: Joi.number().required()
     });
 
     const { error, value } = params.validate(req.params);
@@ -23,40 +22,39 @@ const updateCategorySchema = (req, res, next) => {
     if (error) {
         const { details } = error;
         const message = details.map(i => i.message).join(',');
-
         console.log("error", message);
         res.status(422).json({ error: message })
     }
 
-
     const schema = Joi.object().keys({
-        name: Joi.string().required(),
-        description: Joi.string().required()
+        first_name: Joi.string().required(),
+        last_name: Joi.string().required()
     });
 
     validateRequest(req.body, res, next, schema);
 };
 
-const deleteCategorySchema = (req, res, next) => {
+const deleteAuthorSchema = (req, res, next) => {
     const schema = Joi.object().keys({
-        category_id: Joi.number().required()
+        author_id: Joi.number().required()
+    });
+
+    validateRequest(req.params, res, next, schema);
+};
+
+const getAuthorSchema = (req, res, next) => {
+    const schema = Joi.object().keys({
+        author_id: Joi.number().required()
     });
     validateRequest(req.params, res, next, schema);
 };
 
-const getCategorySchema = (req, res, next) => {
-    const schema = Joi.object().keys({
-        category_id: Joi.number().required()
-    });
-    validateRequest(req.params, res, next, schema);
-};
-
-
-const getAllCategorySchema = (req, res, next) => {
+const getAllAuthorSchema = (req, res, next) => {
     const schema = Joi.object().keys({
         limit: Joi.number().required(),
         offset: Joi.number().required(),
-        name: Joi.string().optional()
+        first_name: Joi.string().optional(),
+        last_name: Joi.string().optional(),
     });
 
     console.log(req.query)
@@ -86,9 +84,9 @@ function validateRequest(req, res, next, schema) {
 }
 
 export {
-    createCategorySchema,
-    updateCategorySchema,
-    deleteCategorySchema,
-    getCategorySchema,
-    getAllCategorySchema
+    createAuthorSchema,
+    updateAuthorSchema,
+    deleteAuthorSchema,
+    getAuthorSchema,
+    getAllAuthorSchema
 }
