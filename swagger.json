@@ -13,12 +13,16 @@
     "basePath": "/",
     "tags": [
         {
+            "name": "User",
+            "description": "User endpoints"
+        },
+        {
             "name": "Category",
             "description": "Category endpoints"
         },
         {
-            "name": "Users",
-            "description": "User endpoints"
+            "name": "Author",
+            "description": "Author endpoints"
         }
     ],
     "components": {
@@ -41,6 +45,84 @@
         "application/json"
     ],
     "definitions": {
+        "User": {
+            "required": [
+                "email",
+                "name",
+                "username",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "uniqueItems": true,
+                    "example": "edvaldod@impact.com"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Edvaldo"
+                },
+                "username": {
+                    "type": "string",
+                    "uniqueItems": true,
+                    "example": "Domingos"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "theNewPass@"
+                }
+            }
+        },
+        "CreateUserResponse": {
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                },
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "user_id": {
+                            "type": "number",
+                            "example": 15
+                        },
+                        "name": {
+                            "type": "string",
+                            "example": "Edvaldo"
+                        },
+                        "username": {
+                            "type": "string",
+                            "example": "Domingos"
+                        },
+                        "email": {
+                            "type": "string",
+                            "example": "edvaldod@impact.com"
+                        },
+                        "token": {
+                            "type": "string",
+                            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InVzZXIxQGdtYWlsLmNvbSIsInVzZXJfaWQiOjYsIm5hbWUiOiJ1c2VyMSIsInVzZXJuYW1lIjoidXNlcjEiLCJpYXQiOjE2MDUzNzYwNTIsImV4cCI6MTYwNTgwODA1Mn0.mKVJIi9Lps9gxurBQmI7iIitmHkYtIPhJoZZk3NgJUw"
+                        }
+                    }
+                }
+            }
+        },
+        "SignInUser": {
+            "required": [
+                "username",
+                "password"
+            ],
+            "properties": {
+                "username": {
+                    "type": "string",
+                    "uniqueItems": true,
+                    "example": "Domingos"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "theNewPass@"
+                }
+            }
+        },
         "Category": {
             "required": [
                 "name",
@@ -127,85 +209,211 @@
                 }
             }
         },
-        "User": {
+        "Author": {
             "required": [
-                "name",
-                "_id",
-                "companies"
+                "first_name",
+                "last_name"
             ],
             "properties": {
-                "_id": {
-                    "type": "integer",
-                    "uniqueItems": true
+                "first_name": {
+                    "type": "string",
+                    "uniqueItems": true,
+                    "example": "Edvaldo"
                 },
-                "isPublic": {
-                    "type": "boolean"
+                "last_name": {
+                    "type": "string",
+                    "example": "Domingos"
+                }
+            }
+        },
+        "CreateAuthorResponse": {
+            "required": [
+                "first_name",
+                "last_name"
+            ],
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "example": "success"
                 },
-                "name": {
-                    "type": "string"
-                },
-                "books": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "name": {
-                                "type": "string"
-                            },
-                            "amount": {
-                                "type": "number"
-                            }
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "author_id": {
+                            "type": "number",
+                            "example": 6
+                        },
+                        "first_name": {
+                            "type": "string",
+                            "uniqueItems": true,
+                            "example": "Edvaldo"
+                        },
+                        "last_name": {
+                            "type": "string",
+                            "example": "Domingos"
                         }
                     }
-                },
-                "companies": {
-                    "type": "array",
-                    "items": {
+                }
+            },
+            "updateAuthor": {
+                "required": [
+                    "name",
+                    "companies"
+                ],
+                "properties": {
+                    "isPublic": {
+                        "type": "boolean"
+                    },
+                    "name": {
                         "type": "string"
+                    },
+                    "books": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "amount": {
+                                    "type": "number"
+                                }
+                            }
+                        }
+                    },
+                    "companies": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
                     }
                 }
             }
         },
-        "updateUser": {
-            "required": [
-                "name",
-                "companies"
-            ],
+        "GetAuthorsResponse": {
             "properties": {
-                "isPublic": {
-                    "type": "boolean"
+                "status": {
+                    "type": "string",
+                    "example": "success"
                 },
-                "name": {
-                    "type": "string"
-                },
-                "books": {
+                "data": {
                     "type": "array",
                     "items": {
-                        "type": "object",
                         "properties": {
-                            "name": {
-                                "type": "string"
+                            "status": {
+                                "type": "string",
+                                "example": "success"
                             },
-                            "amount": {
-                                "type": "number"
+                            "data": {
+                                "type": "object",
+                                "properties": {
+                                    "author_id": {
+                                        "type": "number",
+                                        "example": 6
+                                    },
+                                    "first_name": {
+                                        "type": "string",
+                                        "uniqueItems": true,
+                                        "example": "Edvaldo"
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "example": "Domingos"
+                                    }
+                                }
                             }
                         }
-                    }
-                },
-                "companies": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
                     }
                 }
             }
         },
-        "Users": {
-            "type": "array",
-            "$ref": "#/definitions/User"
+        "DeleteAuthorResponse": {
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                },
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "message": {
+                            "type": "string",
+                            "example": "Author deleted successfully"
+                        }
+                    }
+                }
+            }
         }
     },
     "paths": {
+        "/signup": {
+            "post": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "Sign up new User. Copy the token property from the response and use it as the JWT token to access protected routes",
+                "requestBody": {
+                    "required": true,
+                    "description": "the user you want to create",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/definitions/User"
+                            }
+                        }
+                    }
+                },
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Copy the token property from the response and use it as the JWT token to access protected routes",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/definitions/CreateUserResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/signin": {
+            "post": {
+                "tags": [
+                    "User"
+                ],
+                "summary": "Sign In a User. Copy the token property from the response and use it as the JWT token to access protected routes",
+                "requestBody": {
+                    "required": true,
+                    "description": "the user you want to sign in with",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/definitions/SignInUser"
+                            }
+                        }
+                    }
+                },
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Copy the token property from the response and use it as the JWT token to access protected routes",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/definitions/CreateUserResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/category": {
             "post": {
                 "tags": [
@@ -248,7 +456,7 @@
                 "tags": [
                     "Category"
                 ],
-                "summary": "Get all users in categories",
+                "summary": "Get all categories ",
                 "parameters": [
                     {
                         "name": "name",
@@ -261,14 +469,14 @@
                         "name": "limit",
                         "in": "query",
                         "description": "number of items to fetch",
-                        "required": false,
+                        "required": true,
                         "type": "number"
                     },
                     {
                         "name": "offset",
                         "in": "query",
                         "description": "the row number from where you want to start fetching",
-                        "required": false,
+                        "required": true,
                         "type": "number"
                     }
                 ],
@@ -297,7 +505,7 @@
                     "name": "category_id",
                     "in": "path",
                     "required": true,
-                    "description": "ID of user that we want to find",
+                    "description": "ID of category that we want to find",
                     "type": "integer"
                 }
             ],
@@ -382,98 +590,187 @@
                 ]
             }
         },
-        "/users": {
-            "get": {
-                "tags": [
-                    "Users"
-                ],
-                "summary": "Get all users in system",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/Users"
-                        }
-                    }
-                }
-            }
-        },
-        "/addUser": {
+        "/author": {
             "post": {
                 "tags": [
-                    "Users"
+                    "Author"
                 ],
-                "description": "Create new user in system",
-                "parameters": [
-                    {
-                        "name": "user",
-                        "in": "body",
-                        "description": "User that we want to create",
-                        "schema": {
-                            "$ref": "#/definitions/User"
+                "summary": "Create new Author",
+                "requestBody": {
+                    "required": true,
+                    "description": "the author you want to create",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/definitions/Author"
+                            }
                         }
                     }
-                ],
+                },
                 "produces": [
                     "application/json"
                 ],
-                "responses": {
-                    "200": {
-                        "description": "New user is created",
-                        "schema": {
-                            "$ref": "#/definitions/User"
-                        }
-                    }
-                }
-            }
-        },
-        "/user/{id}": {
-            "put": {
-                "summary": "Update user with give ID",
-                "tags": [
-                    "Users"
-                ],
-                "parameters": [
+                "security": [
                     {
-                        "name": "user",
-                        "in": "body",
-                        "description": "User with new values of properties",
-                        "schema": {
-                            "$ref": "#/definitions/updateUser"
-                        }
+                        "token": []
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "User is updated",
-                        "schema": {
-                            "$ref": "#/definitions/User"
+                        "description": "A author response object",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/definitions/CreateAuthorResponse"
+                                }
+                            }
                         }
                     }
                 }
             },
-            "parameters": [
-                {
-                    "name": "id",
-                    "in": "path",
-                    "required": true,
-                    "description": "ID of user that we want to find",
-                    "type": "integer"
-                }
-            ],
-            "delete": {
-                "summary": "Delete user with given ID",
+            "get": {
                 "tags": [
-                    "Users"
+                    "Author"
+                ],
+                "summary": "Get all categories ",
+                "parameters": [
+                    {
+                        "name": "first_name",
+                        "in": "query",
+                        "description": "the name of the author",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "last_name",
+                        "in": "query",
+                        "description": "the last name of the author",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "number of items to fetch",
+                        "required": true,
+                        "type": "number"
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "description": "the row number from where you want to start fetching",
+                        "required": true,
+                        "type": "number"
+                    }
+                ],
+                "security": [
+                    {
+                        "token": []
+                    }
                 ],
                 "responses": {
                     "200": {
-                        "description": "User is deleted",
-                        "schema": {
-                            "$ref": "#/definitions/User"
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/definitions/GetAuthorsResponse"
+                                }
+                            }
                         }
                     }
                 }
+            }
+        },
+        "/author/{author_id}": {
+            "parameters": [
+                {
+                    "name": "author_id",
+                    "in": "path",
+                    "required": true,
+                    "description": "ID of author that we want to find",
+                    "type": "integer"
+                }
+            ],
+            "put": {
+                "summary": "Update author with given ID",
+                "tags": [
+                    "Author"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "description": "the author you want to create",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/definitions/Author"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Author is updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/definitions/CreateAuthorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "token": []
+                    }
+                ]
+            },
+            "get": {
+                "summary": "Gets a author with given ID",
+                "tags": [
+                    "Author"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Author is fetched",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/definitions/CreateAuthorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "token": []
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Delete author with given ID",
+                "tags": [
+                    "Author"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Author was deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/definitions/DeleteAuthorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "token": []
+                    }
+                ]
             }
         }
     }

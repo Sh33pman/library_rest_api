@@ -110,7 +110,7 @@ const getAuthor = async (req, res) => {
             return res.status(status.bad).send(errorMessage);
         }
 
-        successMessage.data = dbResponse;
+        successMessage.data = dbResponse[0];
         return res.status(status.success).send(successMessage);
     } catch (error) {
         console.log(error)
@@ -154,7 +154,12 @@ const updateAuthor = async (req, res) => {
         const values = [first_name, last_name, author_id];
         const response = await dbQuery.query(updateAuthor, values);
         const dbResult = response.rows[0];
-        delete dbResult.password;
+
+        if (!dbResult) {
+            errorMessage.error = 'Failed to update Author. Id not found';
+            return res.status(status.error).send(errorMessage);
+        }
+
         successMessage.data = dbResult;
         return res.status(status.success).send(successMessage);
 
