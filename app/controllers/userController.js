@@ -82,7 +82,7 @@ const siginUser = async (req, res) => {
         const dbResponse = rows[0];
 
         if (!dbResponse) {
-            errorMessage.error = 'User not found';
+            errorMessage.error = 'Password or Username you provided is incorrect';
             return res.status(status.notfound).send(errorMessage);
         }
 
