@@ -1,0 +1,112 @@
+// @ts-check
+const Joi = require('joi');
+
+// "author": "3",
+//     "name": "I Will get employed",
+//         "categories": [6, 3],
+//             "isbn_number": "10",
+//                 "year_published": "2021"
+const createBookSchema = (req, res, next) => {
+
+    const schema = Joi.object().keys({
+        author: Joi.number().required(),
+        name: Joi.string().required(),
+        isbn_number: Joi.string().required(),
+        year_published: Joi.string().required(),
+        categories: Joi.array().items(Joi.number()).required(),
+    });
+
+    validateRequest(req.body, res, next, schema);
+};
+
+const updateBookSchema = (req, res, next) => {
+
+    const params = Joi.object().keys({
+        isbn_number: Joi.string().required()
+    });
+
+    const { error, value } = params.validate(req.params);
+
+    if (error) {
+        const { details } = error;
+        const message = details.map(i => i.message).join(',');
+        console.log("error", message);
+        res.status(422).json({ error: message })
+    }
+
+    const schema = Joi.object().keys({
+        author: Joi.number().required(),
+        name: Joi.string().required(),
+        isbn_number: Joi.string().required(),
+        year_published: Joi.string().required(),
+        categories: Joi.array().items(
+            Joi.object().keys({
+                old: Joi.number().required(),
+                new: Joi.number().required()
+            })
+        ).required().min(1),
+    });
+
+    validateRequest(req.body, res, next, schema);
+};
+
+const deleteBookSchema = (req, res, next) => {
+    const schema = Joi.object().keys({
+        isbn_number: Joi.string().required()
+    });
+
+    validateRequest(req.params, res, next, schema);
+};
+
+const getBookSchema = (req, res, next) => {
+    const schema = Joi.object().keys({
+        isbn_number: Joi.string().required()
+    });
+    validateRequest(req.params, res, next, schema);
+};
+
+// author_first_name, author_last_name, book_name, isbn_number, year_published, limit, offset
+const getAllBookSchema = (req, res, next) => {
+    const schema = Joi.object().keys({
+        author_first_name: Joi.string().optional(),
+        author_last_name: Joi.string().optional(),
+        book_name: Joi.string().optional(),
+        isbn_number: Joi.string().optional(),
+        year_published: Joi.string().optional(),
+        limit: Joi.number().required(),
+        offset: Joi.number().required(),
+    });
+
+    console.log(req.query)
+    validateRequest(req.query, res, next, schema);
+};
+
+function validateRequest(req, res, next, schema) {
+    const options = {
+        abortEarly: false, // include all errors
+        allowUnknown: true, // ignore unknown props
+        stripUnknown: true // remove unknown props
+    };
+
+    // const { error, value } = schema.validate(req.body, options);
+    const { error, value } = schema.validate(req, options);
+
+    if (error) {
+        const { details } = error;
+        const message = details.map(i => i.message).join(',');
+
+        console.log("error", message);
+        res.status(422).json({ error: message })
+    } else {
+        req.body = value;
+        next();
+    }
+}
+
+export {
+    createBookSchema,
+    updateBookSchema,
+    deleteBookSchema,
+    getBookSchema,
+    getAllBookSchema
+}

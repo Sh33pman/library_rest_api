@@ -10,24 +10,18 @@ import pool from '../db/dev/pool';
 // author VARCHAR(100) NOT NULL,
 // year_published VARCHAR(100) NOT NULL
 
-// ■ /book - POST - insert a new book with fields: author, name, categories, isbn_number, year_published
-// ■ /book/{id} - DELETE - delete a book
-// ■ /book/{id} - PUT - update a book
-// ■ /book - GET - retrieve books allowing filtering and paging
-// ■ /book/{id} - GET - retrieve a specific book
-
 const createBook = async (req, res) => {
     const { author, name, categories, isbn_number, year_published } = req.body;
 
-    if (empty(author) || empty(name) || empty(isbn_number) || empty(year_published)) {
-        errorMessage.error = 'Author, Name, ISBN and Year Pubblished is required';
-        return res.status(status.bad).send(errorMessage);
-    }
+    // if (empty(author) || empty(name) || empty(isbn_number) || empty(year_published)) {
+    //     errorMessage.error = 'Author, Name, ISBN and Year Pubblished is required';
+    //     return res.status(status.bad).send(errorMessage);
+    // }
 
-    if (categories.length <= 0) {
-        errorMessage.error = 'Categories is required required';
-        return res.status(status.bad).send(errorMessage);
-    }
+    // if (categories.length <= 0) {
+    //     errorMessage.error = 'Categories is required required';
+    //     return res.status(status.bad).send(errorMessage);
+    // }
 
 
     try {
@@ -184,9 +178,12 @@ const getBook = async (req, res) => {
         const { rows } = await dbQuery.query(getAllBooksQuery, [isbn_number]);
         const dbResponse = rows[0];
 
-        dbResponse.categories = await getCategoriesByISBN(isbn_number)
+        let categories = await getCategoriesByISBN(isbn_number)
+        if (categories && categories.length > 0) {
+            dbResponse.categories = categories
+        }
 
-        successMessage.data = dbResponse;
+        successMessage.data = dbResponse || {};
         return res.status(status.success).send(successMessage);
 
     } catch (error) {
@@ -202,7 +199,7 @@ async function getCategoriesByISBN(isbn_number) {
         let insertBookCategoryQuery = `SELECT category_id FROM book_categories WHERE isbn_number = $1`;
         const { rows } = await dbQuery.query(insertBookCategoryQuery, [isbn_number]);
         let categories = (rows || []).map(item => item.category_id)
-        return categories;
+        return categories
     } catch (error) {
         console.log("Failed to get All categories")
         console.log(error)

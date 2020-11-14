@@ -1,8 +1,6 @@
 // @ts-check
 const Joi = require('joi');
 
-
-
 const signUpUserSchema = (req, res, next) => {
 
     const schema = Joi.object().keys({
