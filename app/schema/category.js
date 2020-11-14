@@ -3,6 +3,7 @@ const Joi = require('joi');
 
 
 const createCategorySchema = (req, res, next) => {
+    console.log(req.body)
 
     const schema = Joi.object().keys({
         name: Joi.string().required(),
@@ -13,6 +14,8 @@ const createCategorySchema = (req, res, next) => {
 };
 
 const updateCategorySchema = (req, res, next) => {
+
+    console.log(req.params)
 
     const params = Joi.object().keys({
         category_id: Joi.number().required()
@@ -29,6 +32,10 @@ const updateCategorySchema = (req, res, next) => {
     }
 
 
+    // const schema = Joi.object().keys({
+    //     name: Joi.string(),
+    //     description: Joi.string()
+    // }).or('name', 'description');
     const schema = Joi.object().keys({
         name: Joi.string().required(),
         description: Joi.string().required()

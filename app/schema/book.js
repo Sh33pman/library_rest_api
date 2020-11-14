@@ -1,11 +1,6 @@
 // @ts-check
 const Joi = require('joi');
 
-// "author": "3",
-//     "name": "I Will get employed",
-//         "categories": [6, 3],
-//             "isbn_number": "10",
-//                 "year_published": "2021"
 const createBookSchema = (req, res, next) => {
 
     const schema = Joi.object().keys({
@@ -65,7 +60,6 @@ const getBookSchema = (req, res, next) => {
     validateRequest(req.params, res, next, schema);
 };
 
-// author_first_name, author_last_name, book_name, isbn_number, year_published, limit, offset
 const getAllBookSchema = (req, res, next) => {
     const schema = Joi.object().keys({
         author_first_name: Joi.string().optional(),
@@ -88,7 +82,6 @@ function validateRequest(req, res, next, schema) {
         stripUnknown: true // remove unknown props
     };
 
-    // const { error, value } = schema.validate(req.body, options);
     const { error, value } = schema.validate(req, options);
 
     if (error) {

@@ -147,7 +147,12 @@ const updateCategory = async (req, res) => {
         const values = [name, description, category_id];
         const response = await dbQuery.query(updateCategory, values);
         const dbResult = response.rows[0];
-        delete dbResult.password;
+
+        if (!dbResult) {
+            errorMessage.error = 'Failed to update Category. Id not found';
+            return res.status(status.error).send(errorMessage);
+        }
+
         successMessage.data = dbResult;
         return res.status(status.success).send(successMessage);
 
