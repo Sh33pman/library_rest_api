@@ -1,5 +1,9 @@
 // @ts-check
-const Joi = require('joi');
+// const Joi = require('joi');
+import JoiBase from "@hapi/joi";
+import JoiDate from "@hapi/joi-date";
+
+const Joi = JoiBase.extend(JoiDate); // extend Joi with Joi Date
 
 const createBookSchema = (req, res, next) => {
 
@@ -7,7 +11,9 @@ const createBookSchema = (req, res, next) => {
         author: Joi.number().required(),
         name: Joi.string().required(),
         isbn_number: Joi.string().required(),
-        year_published: Joi.string().required(),
+        year_published: Joi.date()
+            .format("YYYY"),
+        // year_published: Joi.string().required(),
         categories: Joi.array().items(Joi.number()).required(),
     });
 
@@ -33,7 +39,9 @@ const updateBookSchema = (req, res, next) => {
         author: Joi.number().required(),
         name: Joi.string().required(),
         isbn_number: Joi.string().required(),
-        year_published: Joi.string().required(),
+        year_published: Joi.date()
+            .format("YYYY"),
+        // year_published: Joi.string().required(),
         categories: Joi.array().items(
             Joi.object().keys({
                 old: Joi.number().required(),
@@ -62,11 +70,14 @@ const getBookSchema = (req, res, next) => {
 
 const getAllBookSchema = (req, res, next) => {
     const schema = Joi.object().keys({
+        category: Joi.string().optional(),
+        book_name: Joi.string().optional(),
         author_first_name: Joi.string().optional(),
         author_last_name: Joi.string().optional(),
-        book_name: Joi.string().optional(),
         isbn_number: Joi.string().optional(),
-        year_published: Joi.string().optional(),
+        year_published: Joi.date()
+            .format("YYYY").optional(),
+        // year_published: Joi.string().optional(),
         limit: Joi.number().required(),
         offset: Joi.number().required(),
     });

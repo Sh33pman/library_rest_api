@@ -23,6 +23,10 @@
         {
             "name": "Author",
             "description": "Author endpoints"
+        },
+        {
+            "name": "Book",
+            "description": "Book endpoints"
         }
     ],
     "components": {
@@ -339,6 +343,183 @@
                         "message": {
                             "type": "string",
                             "example": "Author deleted successfully"
+                        }
+                    }
+                }
+            }
+        },
+        "Book": {
+            "required": [
+                "author",
+                "name",
+                "categories",
+                "isbn_number",
+                "year_published"
+            ],
+            "properties": {
+                "author": {
+                    "type": "number",
+                    "example": 5
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Clean Code"
+                },
+                "isbn_number": {
+                    "type": "string",
+                    "example": "102030"
+                },
+                "categories": {
+                    "type": "array",
+                    "items": {
+                        "type": "number",
+                        "example": 3
+                    }
+                },
+                "year_published": {
+                    "type": "string",
+                    "example": "2020"
+                }
+            }
+        },
+        "CreateBookResponse": {
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                },
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "author": {
+                            "type": "number",
+                            "example": 5
+                        },
+                        "name": {
+                            "type": "string",
+                            "example": "Clean Code"
+                        },
+                        "isbn_number": {
+                            "type": "string",
+                            "example": "102030"
+                        },
+                        "categories": {
+                            "type": "array",
+                            "items": {
+                                "type": "number",
+                                "example": 15
+                            }
+                        },
+                        "year_published": {
+                            "type": "string",
+                            "example": "2020"
+                        }
+                    }
+                }
+            }
+        },
+        "GetBooksResponse": {
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                },
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "isbn_number": {
+                            "author": {
+                                "type": "string",
+                                "example": "1471"
+                            },
+                            "book_name": {
+                                "type": "string",
+                                "example": "Clean Code"
+                            },
+                            "year_published": {
+                                "type": "string",
+                                "example": "2001"
+                            },
+                            "categories": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {
+                                            "type": "number",
+                                            "example": 5
+                                        }
+                                    }
+                                }
+                            },
+                            "author_name": {
+                                "type": "string",
+                                "example": "Uncle Bob"
+                            },
+                            "author_last_name": {
+                                "type": "string",
+                                "example": "Uncle Bob Surname"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "UpdateBook": {
+            "required": [
+                "author",
+                "name",
+                "categories",
+                "isbn_number",
+                "year_published"
+            ],
+            "properties": {
+                "author": {
+                    "type": "number",
+                    "example": 6
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Clean Code"
+                },
+                "isbn_number": {
+                    "type": "string",
+                    "example": "201030"
+                },
+                "categories": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "old": {
+                                "type": "number",
+                                "example": 15
+                            },
+                            "new": {
+                                "type": "number",
+                                "example": 5
+                            }
+                        }
+                    }
+                },
+                "year_published": {
+                    "type": "string",
+                    "example": "2020"
+                }
+            }
+        },
+        "DeleteBookResponse": {
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                },
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "message": {
+                            "type": "string",
+                            "example": "Book deleted successfully"
                         }
                     }
                 }
@@ -761,6 +942,218 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/definitions/DeleteAuthorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "token": []
+                    }
+                ]
+            }
+        },
+        "/book": {
+            "post": {
+                "tags": [
+                    "Book"
+                ],
+                "summary": "Create new Book",
+                "requestBody": {
+                    "required": true,
+                    "description": "the book you want to create",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/definitions/Book"
+                            }
+                        }
+                    }
+                },
+                "produces": [
+                    "application/json"
+                ],
+                "security": [
+                    {
+                        "token": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "A book response object",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/definitions/CreateBookResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "Book"
+                ],
+                "summary": "Get all categories ",
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "description": "the category of the book",
+                        "required": false,
+                        "type": "string",
+                        "example": "Action"
+                    },
+                    {
+                        "name": "book_name",
+                        "in": "query",
+                        "description": "the name of the book",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "author_first_name",
+                        "in": "query",
+                        "description": "the first name of the author",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "author_last_name",
+                        "in": "query",
+                        "description": "the first last name of the author",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "isbn_number",
+                        "in": "query",
+                        "description": "the first name of the author",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "year_published",
+                        "in": "query",
+                        "description": "the first name of the author",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "number of items to fetch",
+                        "required": true,
+                        "type": "number"
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "description": "the row number from where you want to start fetching",
+                        "required": true,
+                        "type": "number"
+                    }
+                ],
+                "security": [
+                    {
+                        "token": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/definitions/GetBooksResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/book/{isbn_number}": {
+            "parameters": [
+                {
+                    "name": "isbn_number",
+                    "in": "path",
+                    "required": true,
+                    "description": "ISBN of book that we want to find",
+                    "type": "integer"
+                }
+            ],
+            "put": {
+                "summary": "Update book with given ISBN",
+                "tags": [
+                    "Book"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "description": "the book you want to update",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/definitions/UpdateBook"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Book is updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/definitions/CreateBookResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "token": []
+                    }
+                ]
+            },
+            "get": {
+                "summary": "Gets a book with given ISBN",
+                "tags": [
+                    "Book"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Book is fetched",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/definitions/CreateBookResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "token": []
+                    }
+                ]
+            },
+            "delete": {
+                "summary": "Delete book with given ISBN",
+                "tags": [
+                    "Book"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Author was deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/definitions/DeleteBookResponse"
                                 }
                             }
                         }

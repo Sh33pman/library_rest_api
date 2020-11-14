@@ -5,46 +5,28 @@ import { empty, isEmpty } from '../helpers/validation';
 import { errorMessage, successMessage, status } from '../helpers/status';
 import pool from '../db/dev/pool';
 
-// isbn_number VARCHAR(100) PRIMARY KEY,
-// name VARCHAR(100) NOT NULL,
-// author VARCHAR(100) NOT NULL,
-// year_published VARCHAR(100) NOT NULL
-
 const createBook = async (req, res) => {
     const { author, name, categories, isbn_number, year_published } = req.body;
 
-    // if (empty(author) || empty(name) || empty(isbn_number) || empty(year_published)) {
-    //     errorMessage.error = 'Author, Name, ISBN and Year Pubblished is required';
-    //     return res.status(status.bad).send(errorMessage);
-    // }
-
-    // if (categories.length <= 0) {
-    //     errorMessage.error = 'Categories is required required';
-    //     return res.status(status.bad).send(errorMessage);
-    // }
-
-
     try {
-        // Start Transaction
         await pool.query("BEGIN");
 
         const createBookQuery = `INSERT INTO  books(isbn_number, name, author, year_published) VALUES($1, $2, $3, $4) returning *`;
         const values = [isbn_number, name, author, year_published];
-
-        console.log(createBookQuery)
 
         const { rows } = await dbQuery.query(createBookQuery, values);
         const dbResponse = rows[0];
 
         let bookCategoryRes = await insertBookCategory(req, res);
 
-        if (bookCategoryRes !== 1) {
+        if (!Array.isArray(bookCategoryRes)) {
             pool.query("ROLLBACK");
             errorMessage.error = bookCategoryRes.message;
             return res.status(status.error).send(errorMessage);
         }
 
         successMessage.data = dbResponse;
+        successMessage.data.categories = bookCategoryRes;
         pool.query("COMMIT");
         return res.status(status.created).send(successMessage);
 
@@ -65,11 +47,18 @@ const insertBookCategory = async (req, res) => {
     const { categories, isbn_number, } = req.body;
 
     try {
-        let insertBookCategoryQuery = `INSERT INTO  book_categories(category_id, isbn_number) VALUES`;
+        let insertBookCategoryQuery = `INSERT INTO  book_categories(category_id, isbn_number) VALUES `;
         insertBookCategoryQuery += buildCategoryInsertQuery(categories, isbn_number)
-        const { rows } = await dbQuery.query(insertBookCategoryQuery);
+        let res = await dbQuery.query(insertBookCategoryQuery);
 
-        return 1;
+        let insertedBookCategoriesQuery = `SELECT * FROM book_categories WHERE isbn_number=$1`;
+        let { rows } = await dbQuery.query(insertedBookCategoriesQuery, [isbn_number]);
+
+        let insertedCategories = (rows || []).map(item => item.category_id);
+
+        console.log(insertedCategories)
+
+        return insertedCategories;
     } catch (error) {
         if (error.code === '23503') {
             error.message = `FOREIGN KEY VIOLATION `;
@@ -125,9 +114,13 @@ WHERE  	1=1 `;
         }
 
         const { rows } = await dbQuery.query(getAllBooksQuery);
-        const dbResponse = rows;
 
-        successMessage.data = dbResponse;
+        let refactoredRes = refactorRows(rows)
+
+        // const dbResponse = rows;
+        successMessage.data = refactoredRes;
+
+        // successMessage.data = refactoredRes;
         return res.status(status.success).send(successMessage);
     } catch (error) {
         console.log(error)
@@ -137,7 +130,7 @@ WHERE  	1=1 `;
 }
 
 function buildSearchCriteriaQuery(parms) {
-    const { author_first_name, author_last_name, book_name, isbn_number, year_published, limit, offset } = parms
+    const { author_first_name, author_last_name, category, book_name, isbn_number, year_published, limit, offset } = parms
     let searchCriteria = ``;
 
     if (author_first_name) {
@@ -152,6 +145,10 @@ function buildSearchCriteriaQuery(parms) {
         searchCriteria += `${searchCriteria !== '' ? "OR " : ""} LOWER(b.name) LIKE LOWER('%${book_name}%')`
     }
 
+    if (category) {
+        searchCriteria += `${searchCriteria !== '' ? "OR " : ""} LOWER(c.name) LIKE LOWER('%${category}%')`
+    }
+
     if (isbn_number) {
         searchCriteria += `${searchCriteria !== '' ? "OR " : ""} b.isbn_number LIKE '%${isbn_number}%' `
     }
@@ -164,9 +161,52 @@ function buildSearchCriteriaQuery(parms) {
 }
 
 function isSearchCriteriaProvided(params) {
-    const { author_first_name, author_last_name, book_name, isbn_number, year_published } = params
-    return !(isEmpty(author_first_name) && isEmpty(author_last_name) && isEmpty(book_name) && isEmpty(isbn_number) && isEmpty(year_published))
+    const { author_first_name, author_last_name, book_name, isbn_number, year_published, category } = params
+    return !(isEmpty(author_first_name) && isEmpty(author_last_name) && isEmpty(book_name) && isEmpty(isbn_number) && isEmpty(year_published) && isEmpty(category))
 
+
+}
+
+function refactorRows(rows) {
+    // {
+    //     "isbn_number": "1471",
+    //     "book_name": "Clean Code 2",
+    //     "year_published": "2016",
+    //     "author_name": "paulo",
+    //     "author_last_name": "cambuiti",
+    //     "category_id": 7,
+    //     "category_name": "Science",
+    //     "category_description": "Impact RD"
+    let books = [];
+
+    (rows || []).forEach((book, idx) => {
+        let isBookFound = books.findIndex(b => b.isbn_number === book.isbn_number);
+        if (isBookFound > -1) {
+            books[isBookFound].categories.push({
+                category_id: book.category_id,
+                category_name: book.category_name,
+                category_description: book.category_description
+            })
+        } else {
+            // book.categories = [book.category_id];
+            // delete book.category_id;
+            // delete book.category_name;
+            // delete book.category_description;
+            // book.categories = [book.category_id];
+            book.categories = [
+                {
+                    category_id: book.category_id,
+                    category_name: book.category_name,
+                    category_description: book.category_description
+                }
+            ];
+            books.push(book)
+        }
+    });
+
+
+    console.log(books)
+    return books
 
 }
 
@@ -321,3 +361,8 @@ export {
     updateBook,
     deleteBook,
 };
+
+
+
+
+
