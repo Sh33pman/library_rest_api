@@ -5,23 +5,19 @@ import { empty, isEmpty } from '../helpers/validation';
 import { errorMessage, successMessage, status } from '../helpers/status';
 
 
-// ■ /author - POST - insert a new author with fields: first_first_name, last_name
-// ■ /author/{id} - DELETE - delete an author only if not linked to a book
-// ■ /author/{id} - PUT - update an author
-// ■ /author - GET - retrieve authors allowing filtering and paging
-// ■ /author/{id} - GET - retrieve a specific author
+
 const createAuthor = async (req, res) => {
     const { first_name, last_name } = req.body;
 
-    if (empty(first_name)) {
-        errorMessage.error = 'First name is required';
-        return res.status(status.bad).send(errorMessage);
-    }
+    // if (empty(first_name)) {
+    //     errorMessage.error = 'First name is required';
+    //     return res.status(status.bad).send(errorMessage);
+    // }
 
-    if (empty(last_name)) {
-        errorMessage.error = 'Last name is required';
-        return res.status(status.bad).send(errorMessage);
-    }
+    // if (empty(last_name)) {
+    //     errorMessage.error = 'Last name is required';
+    //     return res.status(status.bad).send(errorMessage);
+    // }
 
     const createAuthorQuery = `INSERT INTO  authors(first_name, last_name) VALUES($1, $2) returning *`;
     const values = [first_name, last_name];

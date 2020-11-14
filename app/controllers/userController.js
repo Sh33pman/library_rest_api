@@ -11,20 +11,20 @@ const signupUser = async (req, res) => {
     const { email, name, username, password } = req.body;
 
     //   const created_on = moment(new Date());
-    if (isEmpty(email) || isEmpty(name) || isEmpty(username) || isEmpty(password)) {
-        errorMessage.error = 'Email, password, first name and last name field cannot be empty';
-        return res.status(status.bad).send(errorMessage);
-    }
+    // if (isEmpty(email) || isEmpty(name) || isEmpty(username) || isEmpty(password)) {
+    //     errorMessage.error = 'Email, password, first name and last name field cannot be empty';
+    //     return res.status(status.bad).send(errorMessage);
+    // }
 
-    if (!isValidEmail(email)) {
-        errorMessage.error = 'Please enter a valid Email';
-        return res.status(status.bad).send(errorMessage);
-    }
+    // if (!isValidEmail(email)) {
+    //     errorMessage.error = 'Please enter a valid Email';
+    //     return res.status(status.bad).send(errorMessage);
+    // }
 
-    if (!validatePassword(password)) {
-        errorMessage.error = 'Password must be more than five(5) characters';
-        return res.status(status.bad).send(errorMessage);
-    }
+    // if (!validatePassword(password)) {
+    //     errorMessage.error = 'Password must be more than five(5) characters';
+    //     return res.status(status.bad).send(errorMessage);
+    // }
 
     const hashedPassword = hashPassword(password);
 
@@ -64,15 +64,15 @@ const signupUser = async (req, res) => {
 const siginUser = async (req, res) => {
     const { username, password } = req.body;
 
-    if (isEmpty(username) || isEmpty(password)) {
-        errorMessage.error = 'Username or Password detail is missing';
-        return res.status(status.bad).send(errorMessage);
-    }
+    // if (isEmpty(username) || isEmpty(password)) {
+    //     errorMessage.error = 'Username or Password detail is missing';
+    //     return res.status(status.bad).send(errorMessage);
+    // }
 
-    if (!validatePassword(password)) {
-        errorMessage.error = 'Please enter a valid Password';
-        return res.status(status.bad).send(errorMessage);
-    }
+    // if (!validatePassword(password)) {
+    //     errorMessage.error = 'Please enter a valid Password';
+    //     return res.status(status.bad).send(errorMessage);
+    // }
 
 
     try {
