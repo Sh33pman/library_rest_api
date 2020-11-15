@@ -11,8 +11,8 @@ const createBook = async (req, res) => {
     try {
         await pool.query("BEGIN");
 
-        const createBookQuery = `INSERT INTO  books(isbn_number, name, author, year_published) VALUES($1, $2, $3, $4) returning *`;
-        const values = [isbn_number, name, author, year_published];
+        const createBookQuery = `INSERT INTO  books(isbn_number, name, author, year_published, operation_by_user) VALUES($1, $2, $3, $4, $5) returning *`;
+        const values = [isbn_number, name, author, year_published, req.user.username];
 
         const { rows } = await dbQuery.query(createBookQuery, values);
         const dbResponse = rows[0];
@@ -47,16 +47,14 @@ const insertBookCategory = async (req, res) => {
     const { categories, isbn_number, } = req.body;
 
     try {
-        let insertBookCategoryQuery = `INSERT INTO  book_categories(category_id, isbn_number) VALUES `;
-        insertBookCategoryQuery += buildCategoryInsertQuery(categories, isbn_number)
+        let insertBookCategoryQuery = `INSERT INTO  book_categories(category_id, isbn_number, operation_by_user) VALUES `;
+        insertBookCategoryQuery += buildCategoryInsertQuery(categories, isbn_number, req)
         let res = await dbQuery.query(insertBookCategoryQuery);
 
         let insertedBookCategoriesQuery = `SELECT * FROM book_categories WHERE isbn_number=$1`;
         let { rows } = await dbQuery.query(insertedBookCategoriesQuery, [isbn_number]);
 
         let insertedCategories = (rows || []).map(item => item.category_id);
-
-        console.log(insertedCategories)
 
         return insertedCategories;
     } catch (error) {
@@ -68,11 +66,11 @@ const insertBookCategory = async (req, res) => {
     }
 }
 
-function buildCategoryInsertQuery(categories, isbn_number) {
+function buildCategoryInsertQuery(categories, isbn_number, req) {
     let insertBookCategoryQuery = ``;
 
     (categories || []).forEach((category, idx) => {
-        insertBookCategoryQuery += `(${category}, '${isbn_number}') `;
+        insertBookCategoryQuery += `(${category}, '${isbn_number}', '${req.user.username}') `;
         let isLastItem = idx === (categories.length - 1);
 
         if (!isLastItem) {
@@ -117,10 +115,8 @@ WHERE  	1=1 `;
 
         let refactoredRes = refactorRows(rows)
 
-        // const dbResponse = rows;
         successMessage.data = refactoredRes;
 
-        // successMessage.data = refactoredRes;
         return res.status(status.success).send(successMessage);
     } catch (error) {
         console.log(error)
@@ -168,15 +164,7 @@ function isSearchCriteriaProvided(params) {
 }
 
 function refactorRows(rows) {
-    // {
-    //     "isbn_number": "1471",
-    //     "book_name": "Clean Code 2",
-    //     "year_published": "2016",
-    //     "author_name": "paulo",
-    //     "author_last_name": "cambuiti",
-    //     "category_id": 7,
-    //     "category_name": "Science",
-    //     "category_description": "Impact RD"
+
     let books = [];
 
     (rows || []).forEach((book, idx) => {
@@ -188,11 +176,6 @@ function refactorRows(rows) {
                 category_description: book.category_description
             })
         } else {
-            // book.categories = [book.category_id];
-            // delete book.category_id;
-            // delete book.category_name;
-            // delete book.category_description;
-            // book.categories = [book.category_id];
             book.categories = [
                 {
                     category_id: book.category_id,
@@ -205,7 +188,6 @@ function refactorRows(rows) {
     });
 
 
-    console.log(books)
     return books
 
 }
@@ -236,10 +218,15 @@ const getBook = async (req, res) => {
 async function getCategoriesByISBN(isbn_number) {
 
     try {
-        let insertBookCategoryQuery = `SELECT category_id FROM book_categories WHERE isbn_number = $1`;
+        // let insertBookCategoryQuery = `SELECT category_id FROM book_categories WHERE isbn_number = $1`;
+        let insertBookCategoryQuery = `SELECT c.category_id , c.name, c.description 
+        FROM book_categories AS bc
+        JOIN categories AS c ON c.category_id = bc.category_id
+        WHERE isbn_number = $1`;
         const { rows } = await dbQuery.query(insertBookCategoryQuery, [isbn_number]);
-        let categories = (rows || []).map(item => item.category_id)
-        return categories
+        // let categories = (rows || []).map(item => item.category_id)
+        // let categories = (rows || []).map(item => item)
+        return rows
     } catch (error) {
         console.log("Failed to get All categories")
         console.log(error)
@@ -283,13 +270,13 @@ const updateBook = async (req, res) => {
     try {
         await pool.query("BEGIN");
         let updateBookQuery = ``;
-        updateBookQuery += buildUpdateBookQuery(req.body, isbn_number)
+        updateBookQuery += buildUpdateBookQuery(req, isbn_number)
 
         const response = await dbQuery.query(updateBookQuery);
         const dbResult = response.rows[0];
         successMessage.data = dbResult;
 
-        let categories = await updateBookCategories(req.body, isbn_number)
+        let categories = await updateBookCategories(req, isbn_number)
 
         if (!categories || categories === null) {
             pool.query("ROLLBACK");
@@ -301,6 +288,8 @@ const updateBook = async (req, res) => {
         pool.query("COMMIT");
         return res.status(status.success).send(successMessage);
     } catch (error) {
+        console.log("UPDATE BOOKS ERROR")
+
         console.log(error);
         pool.query("ROLLBACK");
         errorMessage.error = 'Failed to update Book';
@@ -308,14 +297,15 @@ const updateBook = async (req, res) => {
     }
 };
 
-function buildUpdateBookQuery(payload, isbn_number) {
-    const { author, name, categories, year_published } = payload;
+function buildUpdateBookQuery(req, isbn_number) {
+    const { author, name, categories, year_published } = req.body;
     let updateBookQuery = `UPDATE books SET `;
-    // let updateBookQuery = `UPDATE books SET first_name=$1, last_name=$2 WHERE isbn_number=$3 `;
 
     if (author) {
         updateBookQuery += ` author = ${author}, `;
     }
+
+    updateBookQuery += ` operation_by_user = '${req.user.username}', `;
 
     if (name) {
         updateBookQuery += ` name = '${name}', `;
@@ -326,29 +316,34 @@ function buildUpdateBookQuery(payload, isbn_number) {
     }
 
     updateBookQuery = updateBookQuery.replace(/,\s*$/, "");
+
+
     updateBookQuery += ` WHERE isbn_number = '${isbn_number}'  returning *`;
     return updateBookQuery;
 }
 
-async function updateBookCategories(payload, isbn_number) {
-    const { categories } = payload;
+async function updateBookCategories(req, isbn_number) {
+    const { categories } = req.body;
     try {
         let values = ``;
         (categories || []).forEach(item => {
-            values += `(${item.new}, ${isbn_number}, ${item.old}),`
+            values += `(${item.new}, ${isbn_number}, ${item.old}, '${req.user.username}'),`
         });
 
         values = values.replace(/,\s*$/, "");
 
         let updateBookCategoryQuery = `update public.book_categories as bc set
-        category_id = c.category_id
-        from (values ${values}) as c(category_id, isbn_number, old_category_id) 
+        category_id = c.category_id, operation_by_user = c.operation_by_user 
+        from (values ${values}) as c(category_id, isbn_number, old_category_id, operation_by_user) 
         where bc.isbn_number::int = c.isbn_number AND c.old_category_id = bc.category_id returning *`;
+
 
         const { rows } = await dbQuery.query(updateBookCategoryQuery);
         let result = (rows || []).map(item => item.category_id)
         return result;
+        // return rows
     } catch (error) {
+        console.log("UPDATE BOOKS CATEGORY ERROR")
         console.log(error);
         return null
     }

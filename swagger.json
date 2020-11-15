@@ -996,7 +996,7 @@
                 "tags": [
                     "Book"
                 ],
-                "summary": "Get all categories ",
+                "summary": "Get all books ",
                 "parameters": [
                     {
                         "name": "category",
