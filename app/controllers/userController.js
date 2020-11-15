@@ -30,9 +30,6 @@ const signupUser = async (req, res) => {
 
     } catch (error) {
         if (error.routine === '_bt_check_unique') {
-            // test with the same email 
-            // test with the same username
-            // test with the same email and password
             errorMessage.error = 'Email or Username was already taken. Plese select another one';
             return res.status(status.conflict).send(errorMessage);
         }
@@ -57,8 +54,6 @@ const siginUser = async (req, res) => {
             errorMessage.error = 'Password or Username you provided is incorrect';
             return res.status(status.notfound).send(errorMessage);
         }
-
-        // const {email, name, user_id, username, password} = dbResponse;
 
         if (!comparePassword(dbResponse.password, password)) {
             errorMessage.error = 'Password or Username you provided is incorrect';

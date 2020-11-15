@@ -218,14 +218,12 @@ const getBook = async (req, res) => {
 async function getCategoriesByISBN(isbn_number) {
 
     try {
-        // let insertBookCategoryQuery = `SELECT category_id FROM book_categories WHERE isbn_number = $1`;
+
         let insertBookCategoryQuery = `SELECT c.category_id , c.name, c.description 
         FROM book_categories AS bc
         JOIN categories AS c ON c.category_id = bc.category_id
         WHERE isbn_number = $1`;
         const { rows } = await dbQuery.query(insertBookCategoryQuery, [isbn_number]);
-        // let categories = (rows || []).map(item => item.category_id)
-        // let categories = (rows || []).map(item => item)
         return rows
     } catch (error) {
         console.log("Failed to get All categories")

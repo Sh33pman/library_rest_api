@@ -23,11 +23,6 @@ app.use('/', authorRoutes);
 app.use('/', bookRoutes);
 app.use('/', logsRoutes);
 
-// app.use('/api/v1', usersRoute);
-// app.use('/api/v1', categoryRoutes);
-// app.use('/api/v1', authorRoutes);
-// app.use('/api/v1', bookRoutes);
-
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 
 app.listen(env.port).on('listening', () => {

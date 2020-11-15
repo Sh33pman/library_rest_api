@@ -13,8 +13,3 @@ router.delete('/category/:category_id', verifyAuth, deleteCategorySchema, delete
 router.put('/category/:category_id', verifyAuth, updateCategorySchema, updateCategory);
 
 export default router;
-// /category - POST - insert a new category with fields: name, description
-// ■ /category/{id} - DELETE - delete a category only if not linked to a book
-// ■ /category/{id} - PUT - update a category
-// ■ /category - GET - retrieve categories allowing filtering and paging
-// ■ /category/{id} - GET - retrieve a specific category

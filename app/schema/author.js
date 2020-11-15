@@ -63,12 +63,11 @@ const getAllAuthorSchema = (req, res, next) => {
 
 function validateRequest(req, res, next, schema) {
     const options = {
-        abortEarly: false, // include all errors
-        allowUnknown: true, // ignore unknown props
-        stripUnknown: true // remove unknown props
+        abortEarly: false,
+        allowUnknown: true,
+        stripUnknown: true
     };
 
-    // const { error, value } = schema.validate(req.body, options);
     const { error, value } = schema.validate(req, options);
 
     if (error) {

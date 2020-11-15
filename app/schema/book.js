@@ -3,7 +3,7 @@
 import JoiBase from "@hapi/joi";
 import JoiDate from "@hapi/joi-date";
 
-const Joi = JoiBase.extend(JoiDate); // extend Joi with Joi Date
+const Joi = JoiBase.extend(JoiDate);
 
 const createBookSchema = (req, res, next) => {
 
@@ -41,7 +41,6 @@ const updateBookSchema = (req, res, next) => {
         isbn_number: Joi.string().required(),
         year_published: Joi.date()
             .format("YYYY"),
-        // year_published: Joi.string().required(),
         categories: Joi.array().items(
             Joi.object().keys({
                 old: Joi.number().required(),
@@ -77,7 +76,6 @@ const getAllBookSchema = (req, res, next) => {
         isbn_number: Joi.string().optional(),
         year_published: Joi.date()
             .format("YYYY").optional(),
-        // year_published: Joi.string().optional(),
         limit: Joi.number().required(),
         offset: Joi.number().required(),
     });

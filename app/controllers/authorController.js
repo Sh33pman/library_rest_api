@@ -31,15 +31,10 @@ const createAuthor = async (req, res) => {
 const getAllAuthors = async (req, res) => {
 
     try {
-        // const getAllAuthorsQuery = 'SELECT * FROM authors ORDER BY first_name DESC';
+
         const getAllAuthorsQuery = buildGetAllAuthorsQuery(req.query)
         const { rows } = await dbQuery.query(getAllAuthorsQuery);
         const dbResponse = rows;
-
-        // if (dbResponse[0] === undefined) {
-        //     errorMessage.error = 'No Authors found';
-        //     return res.status(status.bad).send(errorMessage);
-        // }
 
         successMessage.data = dbResponse;
         return res.status(status.success).send(successMessage);
@@ -152,12 +147,6 @@ const updateAuthor = async (req, res) => {
 
     } catch (error) {
         console.log(error)
-
-        // if (error.routine === '_bt_check_unique') {
-        //     errorMessage.error = 'Name is taken already';
-        //     return res.status(status.conflict).send(errorMessage);
-        // }
-
         errorMessage.error = 'Failed to update Author';
         return res.status(status.error).send(errorMessage);
     }

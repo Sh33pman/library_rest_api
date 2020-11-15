@@ -10,7 +10,7 @@ const usePool = async (query) => {
     try {
 
         const res = await pool.query(query);
-        console.log(res);
+        // console.log(res);
     } catch (error) {
         console.log(error);
         pool.end();

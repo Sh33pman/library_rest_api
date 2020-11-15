@@ -5,7 +5,6 @@ const signUpUserSchema = (req, res, next) => {
 
     const schema = Joi.object().keys({
         email: Joi.string().email().required(),
-        // email: Joi.string().required(),
         name: Joi.string().required(),
         username: Joi.string().required(),
         password: Joi.string().required().min(5)
@@ -30,7 +29,6 @@ function validateRequest(req, res, next, schema) {
         stripUnknown: true // remove unknown props
     };
 
-    // const { error, value } = schema.validate(req.body, options);
     const { error, value } = schema.validate(req, options);
 
     if (error) {

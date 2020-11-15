@@ -7,7 +7,6 @@ import { signUpUserSchema, logInUserSchema } from '../schema/user';
 
 const router = express.Router();
 
-// users Routes
 router.post('/signup', signUpUserSchema, signupUser);
 router.post('/signin', logInUserSchema, siginUser);
 

@@ -31,11 +31,6 @@ const updateCategorySchema = (req, res, next) => {
         res.status(422).json({ error: message })
     }
 
-
-    // const schema = Joi.object().keys({
-    //     name: Joi.string(),
-    //     description: Joi.string()
-    // }).or('name', 'description');
     const schema = Joi.object().keys({
         name: Joi.string().required(),
         description: Joi.string().required()
@@ -77,7 +72,6 @@ function validateRequest(req, res, next, schema) {
         stripUnknown: true // remove unknown props
     };
 
-    // const { error, value } = schema.validate(req.body, options);
     const { error, value } = schema.validate(req, options);
 
     if (error) {
