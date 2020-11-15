@@ -4,16 +4,13 @@ import pool from './pool'
 
 export default {
 
-    query(queryText, params) {
-        return new Promise((resolve, reject) => {
-            pool.query(queryText, params)
-                .then(res => {
-                    resolve(res)
-                })
-                .catch(err => {
-                    reject(err);
-                })
-        })
+    async query(queryText, params) {
+        try {
+            const res = await pool.query(queryText, params);
+            return res;
+        } catch (error) {
+            return error;
+        }
     }
 }
 

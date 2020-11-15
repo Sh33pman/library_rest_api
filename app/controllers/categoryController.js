@@ -14,10 +14,6 @@ const createCategory = async (req, res) => {
         const values = [name, description, req.user.username];
         const { rows } = await dbQuery.query(createCategoryQuery, values);
 
-        // let testQuery = `INSERT INTO  categories1( name, description, operation, operation_by_user) VALUES($1, $2, $3, $4)
-        // returning *`
-        // let test = await dbQuery.query(testQuery, [name, description, "CREATE", req.user.username]);
-
         const dbResponse = rows[0];
         successMessage.data = dbResponse;
 

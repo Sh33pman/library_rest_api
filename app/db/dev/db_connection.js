@@ -32,16 +32,6 @@ const createUserTable = async () => {
 
     return await usePool(createUserTableQuery)
 
-    //     (
-    //         user_id SERIAL PRIMARY KEY,
-    //         name VARCHAR(100) NOT NULL,
-    //         username VARCHAR(100) UNIQUE NOT NULL,
-    //         email VARCHAR(100) UNIQUE NOT NULL,
-    //         password VARCHAR(100) NOT NULL,
-    //         operation VARCHAR(100) NOT NULL,
-    // 		operation_by_user VARCHAR(100) NOT NULL,
-    // 		date_time timestamp DEFAULT now()
-    //     )`;
 }
 
 const createAuthorTable = async () => {
@@ -54,16 +44,6 @@ const createAuthorTable = async () => {
     )`;
 
     return await usePool(createAuthorTableQuery)
-
-    // pool.query(createAuthorTableQuery)
-    //     .then(res => {
-    //         console.log(res);
-    //         pool.end();
-    //     })
-    //     .catch(err => {
-    //         console.log(err);
-    //         pool.end();
-    //     })
 }
 
 const createCategoryTable = async () => {
@@ -76,16 +56,6 @@ const createCategoryTable = async () => {
     )`;
 
     return await usePool(createCategoryTableQuery)
-
-    // pool.query(createCategoryTableQuery)
-    //     .then(res => {
-    //         console.log(res);
-    //         pool.end();
-    //     })
-    //     .catch(err => {
-    //         console.log(err);
-    //         pool.end();
-    //     })
 }
 
 const createBookTable = async () => {
@@ -102,16 +72,6 @@ const createBookTable = async () => {
     )`;
 
     return await usePool(createBookTableQuery)
-
-    // pool.query(createBookTableQuery)
-    //     .then(res => {
-    //         console.log(res);
-    //         pool.end();
-    //     })
-    //     .catch(err => {
-    //         console.log(err);
-    //         pool.end();
-    //     })
 }
 
 const createBookCategoryTable = async () => {
@@ -127,15 +87,6 @@ const createBookCategoryTable = async () => {
 
     return await usePool(createBookCategoryTableQuery)
 
-    // pool.query(createBookCategoryTableQuery)
-    //     .then(res => {
-    //         console.log(res);
-    //         pool.end();
-    //     })
-    //     .catch(err => {
-    //         console.log(err);
-    //         pool.end();
-    //     })
 }
 
 const createAuditSchema = async () => {
@@ -176,12 +127,6 @@ const createChangeTriggerFunction = async () => {
     $$ LANGUAGE 'plpgsql' SECURITY DEFINER;`
     return await usePool(query);
 }
-
-// const createUserTrigger = async () => {
-//     const query = `CREATE TRIGGER user_trigger BEFORE INSERT OR UPDATE ON public.users
-//     FOR EACH ROW EXECUTE PROCEDURE change_trigger();`;
-//     return await usePool(query);
-// }
 
 const createAuthorTrigger = async () => {
     const query = `CREATE TRIGGER author_trigger BEFORE INSERT OR UPDATE ON public.authors
@@ -317,11 +262,6 @@ pool.on('remove', () => {
     process.exit(0);
 })
 
-
-// module.exports = {
-//     createAllTables,
-//     // dropAllTables
-// }
 
 export {
     createAllTables,
