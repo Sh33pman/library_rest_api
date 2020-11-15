@@ -25,21 +25,23 @@ const createUserTable = async () => {
         name VARCHAR(100) NOT NULL,
         username VARCHAR(100) UNIQUE NOT NULL,
         email VARCHAR(100) UNIQUE NOT NULL,
-        password VARCHAR(100) NOT NULL
+        password VARCHAR(100) NOT NULL,
+		date_time timestamp DEFAULT now()
     )`;
 
 
     return await usePool(createUserTableQuery)
 
-    // pool.query(createUserTableQuery)
-    //     .then(res => {
-    //         console.log(res);
-    //         pool.end();
-    //     })
-    //     .catch(err => {
-    //         console.log(err);
-    //         pool.end();
-    //     })
+    //     (
+    //         user_id SERIAL PRIMARY KEY,
+    //         name VARCHAR(100) NOT NULL,
+    //         username VARCHAR(100) UNIQUE NOT NULL,
+    //         email VARCHAR(100) UNIQUE NOT NULL,
+    //         password VARCHAR(100) NOT NULL,
+    //         operation VARCHAR(100) NOT NULL,
+    // 		operation_by_user VARCHAR(100) NOT NULL,
+    // 		date_time timestamp DEFAULT now()
+    //     )`;
 }
 
 const createAuthorTable = async () => {
@@ -47,7 +49,8 @@ const createAuthorTable = async () => {
     (
         author_id SERIAL PRIMARY KEY,
         first_name VARCHAR(100) NOT NULL,
-        last_name VARCHAR(100) NOT NULL
+        last_name VARCHAR(100) NOT NULL,
+		operation_by_user VARCHAR(100) NOT NULL
     )`;
 
     return await usePool(createAuthorTableQuery)
@@ -68,7 +71,8 @@ const createCategoryTable = async () => {
     (
         category_id SERIAL PRIMARY KEY,
         name VARCHAR(100) UNIQUE NOT NULL,
-        description VARCHAR(100) NOT NULL
+        description VARCHAR(100) NOT NULL,
+		operation_by_user VARCHAR(100) NOT NULL
     )`;
 
     return await usePool(createCategoryTableQuery)
@@ -91,6 +95,7 @@ const createBookTable = async () => {
         name VARCHAR(100) NOT NULL,
         author INT NOT NULL,
         year_published VARCHAR(100) NOT NULL,
+		operation_by_user VARCHAR(100) NOT NULL,
         CONSTRAINT fk_author 
         FOREIGN KEY(author) REFERENCES authors(author_id) 
 
@@ -114,6 +119,7 @@ const createBookCategoryTable = async () => {
     (
         category_id INT,
         isbn_number VARCHAR(100),
+		operation_by_user VARCHAR(100) NOT NULL,
         CONSTRAINT pk_category_group PRIMARY KEY (category_id,isbn_number),
         CONSTRAINT fk_category FOREIGN KEY(category_id) REFERENCES categories(category_id),
         CONSTRAINT fk_isbn_number FOREIGN KEY(isbn_number) REFERENCES books(isbn_number)
@@ -130,6 +136,75 @@ const createBookCategoryTable = async () => {
     //         console.log(err);
     //         pool.end();
     //     })
+}
+
+const createAuditSchema = async () => {
+    const query = `CREATE SCHEMA IF NOT EXISTS logging;`
+    return await usePool(query);
+}
+
+
+const createAuditTable = async () => {
+    const query = `CREATE TABLE IF NOT EXISTS logging.t_history (
+        id serial,
+        tstamp timestamp DEFAULT now(),
+        schemaname text,
+        tabname text,
+        operation text,
+        who text DEFAULT session_user,
+        new_val json,
+        old_val json
+    );`
+    return await usePool(query);
+}
+
+const createChangeTriggerFunction = async () => {
+    const query = `CREATE OR REPLACE FUNCTION change_trigger() RETURNS trigger AS $$ 
+    BEGIN
+       IF TG_OP = 'INSERT' 
+    THEN
+       INSERT INTO logging.t_history (tabname, schemaname, operation, who, new_val) 
+       VALUES( TG_RELNAME, TG_TABLE_SCHEMA, TG_OP,  NEW.operation_by_user, row_to_json(NEW));
+    RETURN NEW;
+    ELSIF TG_OP = 'UPDATE' 
+    THEN
+       INSERT INTO logging.t_history (tabname, schemaname, operation,who, new_val, old_val) 
+       VALUES(TG_RELNAME, TG_TABLE_SCHEMA, TG_OP,  NEW.operation_by_user, row_to_json(NEW), row_to_json(OLD));
+    RETURN NEW;
+    END IF;
+    END;
+    $$ LANGUAGE 'plpgsql' SECURITY DEFINER;`
+    return await usePool(query);
+}
+
+// const createUserTrigger = async () => {
+//     const query = `CREATE TRIGGER user_trigger BEFORE INSERT OR UPDATE ON public.users
+//     FOR EACH ROW EXECUTE PROCEDURE change_trigger();`;
+//     return await usePool(query);
+// }
+
+const createAuthorTrigger = async () => {
+    const query = `CREATE TRIGGER author_trigger BEFORE INSERT OR UPDATE ON public.authors
+    FOR EACH ROW EXECUTE PROCEDURE change_trigger();`;
+    return await usePool(query);
+}
+
+const createCategoryTrigger = async () => {
+    const query = `CREATE TRIGGER category_trigger BEFORE INSERT OR UPDATE ON public.categories
+    FOR EACH ROW EXECUTE PROCEDURE change_trigger();`;
+    return await usePool(query);
+}
+
+const createBookTrigger = async () => {
+    const query = `CREATE TRIGGER book_trigger BEFORE INSERT OR UPDATE ON public.books
+    FOR EACH ROW EXECUTE PROCEDURE change_trigger();`;
+    return await usePool(query);
+}
+
+const createBookCategoryTrigger = async () => {
+    const query = `CREATE TRIGGER book_category_trigger BEFORE INSERT OR UPDATE ON public.book_categories
+    FOR EACH ROW EXECUTE PROCEDURE change_trigger();`;
+    return await usePool(query);
 }
 
 
@@ -209,6 +284,15 @@ const createAllTables = async () => {
     await createCategoryTable();
     await createBookTable();
     await createBookCategoryTable();
+
+    await createAuditSchema();
+    await createAuditTable();
+    await createChangeTriggerFunction();
+    // await createUserTrigger();
+    await createAuthorTrigger();
+    await createCategoryTrigger();
+    await createBookTrigger();
+    await createBookCategoryTrigger();
 
     pool.end();
 

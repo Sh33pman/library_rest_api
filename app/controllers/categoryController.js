@@ -8,24 +8,16 @@ import { errorMessage, successMessage, status } from '../helpers/status';
 const createCategory = async (req, res) => {
     const { name, description } = req.body;
 
-    // if (empty(name)) {
-    //     errorMessage.error = 'Name is required';
-    //     return res.status(status.bad).send(errorMessage);
-    // }
-
-    // if (empty(description)) {
-    //     errorMessage.error = 'description is required';
-    //     return res.status(status.bad).send(errorMessage);
-    // }
-
-    const createCategoryQuery = `INSERT INTO  categories(
-                                name, description)
-                                VALUES($1, $2)
-                                returning *`;
-    const values = [name, description];
-
     try {
+        const createCategoryQuery = `INSERT INTO  categories( name, description,  operation_by_user) VALUES($1, $2, $3)
+        returning *`;
+        const values = [name, description, req.user.username];
         const { rows } = await dbQuery.query(createCategoryQuery, values);
+
+        // let testQuery = `INSERT INTO  categories1( name, description, operation, operation_by_user) VALUES($1, $2, $3, $4)
+        // returning *`
+        // let test = await dbQuery.query(testQuery, [name, description, "CREATE", req.user.username]);
+
         const dbResponse = rows[0];
         successMessage.data = dbResponse;
 
@@ -46,16 +38,12 @@ const createCategory = async (req, res) => {
 const getAllCategories = async (req, res) => {
 
     try {
-        // const getAllCategoriesQuery = 'SELECT * FROM categories ORDER BY name DESC';
-        let getAllCategoriesQuery = buildGetAllCategoriesQuery(req.query)
+        let getAllCategoriesQuery = buildGetAllCategoriesQuery(req.query);
+
+        console.log(req.user)
 
         const { rows } = await dbQuery.query(getAllCategoriesQuery);
         const dbResponse = rows;
-
-        // if (dbResponse[0] === undefined) {
-        //     errorMessage.error = 'No categories found';
-        //     return res.status(status.bad).send(errorMessage);
-        // }
 
         successMessage.data = dbResponse;
         return res.status(status.success).send(successMessage);
@@ -97,11 +85,6 @@ const getCategory = async (req, res) => {
         const { rows } = await dbQuery.query(getAllCategoriesQuery, [category_id]);
         const dbResponse = rows[0] || {};
 
-        // if (dbResponse[0] === undefined) {
-        //     errorMessage.error = 'No categories found';
-        //     return res.status(status.bad).send(errorMessage);
-        // }
-
         successMessage.data = dbResponse;
         return res.status(status.success).send(successMessage);
     } catch (error) {
@@ -142,9 +125,8 @@ const updateCategory = async (req, res) => {
 
     try {
 
-        const updateCategory = `UPDATE categories SET name=$1, description=$2
-                                WHERE category_id=$3  returning *`;
-        const values = [name, description, category_id];
+        const updateCategory = `UPDATE categories SET name=$1, description=$2 , operation_by_user=$3 WHERE category_id=$4  returning *`;
+        const values = [name, description, req.user.username, category_id];
         const response = await dbQuery.query(updateCategory, values);
         const dbResult = response.rows[0];
 
@@ -152,6 +134,7 @@ const updateCategory = async (req, res) => {
             errorMessage.error = 'Failed to update Category. Id not found';
             return res.status(status.error).send(errorMessage);
         }
+
 
         successMessage.data = dbResult;
         return res.status(status.success).send(successMessage);

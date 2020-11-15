@@ -9,18 +9,8 @@ import { errorMessage, successMessage, status } from '../helpers/status';
 const createAuthor = async (req, res) => {
     const { first_name, last_name } = req.body;
 
-    // if (empty(first_name)) {
-    //     errorMessage.error = 'First name is required';
-    //     return res.status(status.bad).send(errorMessage);
-    // }
-
-    // if (empty(last_name)) {
-    //     errorMessage.error = 'Last name is required';
-    //     return res.status(status.bad).send(errorMessage);
-    // }
-
-    const createAuthorQuery = `INSERT INTO  authors(first_name, last_name) VALUES($1, $2) returning *`;
-    const values = [first_name, last_name];
+    const createAuthorQuery = `INSERT INTO  authors(first_name, last_name, operation_by_user) VALUES($1, $2, $3) returning *`;
+    const values = [first_name, last_name, req.user.username];
 
     try {
         const { rows } = await dbQuery.query(createAuthorQuery, values);
@@ -30,10 +20,7 @@ const createAuthor = async (req, res) => {
         return res.status(status.created).send(successMessage);
 
     } catch (error) {
-        // if (error.routine === '_bt_check_unique') {
-        //     errorMessage.error = 'This author first_name has been created already';
-        //     return res.status(status.conflict).send(errorMessage);
-        // }
+
         console.log(error)
         errorMessage.error = 'Unable to create Author';
         return res.status(status.error).send(errorMessage);
@@ -150,8 +137,8 @@ const updateAuthor = async (req, res) => {
 
     try {
 
-        const updateAuthor = `UPDATE authors SET first_name=$1, last_name=$2 WHERE author_id=$3 returning *`;
-        const values = [first_name, last_name, author_id];
+        const updateAuthor = `UPDATE authors SET first_name=$1, last_name=$2, operation_by_user=$3  WHERE author_id=$4 returning *`;
+        const values = [first_name, last_name, req.user.username, author_id];
         const response = await dbQuery.query(updateAuthor, values);
         const dbResult = response.rows[0];
 
