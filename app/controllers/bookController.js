@@ -278,6 +278,13 @@ const updateBook = async (req, res) => {
 
         let categories = await updateBookCategories(req, isbn_number)
 
+
+        if (!dbResult || dbResult === null) {
+            pool.query("ROLLBACK");
+            errorMessage.error = 'Failed to update Book. ISBN was not found';
+            return res.status(status.error).send(errorMessage);
+        }
+
         if (!categories || categories === null) {
             pool.query("ROLLBACK");
             errorMessage.error = 'Failed to update Book';
@@ -341,7 +348,6 @@ async function updateBookCategories(req, isbn_number) {
         const { rows } = await dbQuery.query(updateBookCategoryQuery);
         let result = (rows || []).map(item => item.category_id)
         return result;
-        // return rows
     } catch (error) {
         console.log("UPDATE BOOKS CATEGORY ERROR")
         console.log(error);

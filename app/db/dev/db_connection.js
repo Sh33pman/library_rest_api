@@ -145,7 +145,7 @@ const createAuditSchema = async () => {
 
 
 const createAuditTable = async () => {
-    const query = `CREATE TABLE IF NOT EXISTS logging.t_history (
+    const query = `CREATE TABLE IF NOT EXISTS logging.logs (
         id serial,
         tstamp timestamp DEFAULT now(),
         schemaname text,
@@ -163,12 +163,12 @@ const createChangeTriggerFunction = async () => {
     BEGIN
        IF TG_OP = 'INSERT' 
     THEN
-       INSERT INTO logging.t_history (tabname, schemaname, operation, who, new_val) 
+       INSERT INTO logging.logs (tabname, schemaname, operation, who, new_val) 
        VALUES( TG_RELNAME, TG_TABLE_SCHEMA, TG_OP,  NEW.operation_by_user, row_to_json(NEW));
     RETURN NEW;
     ELSIF TG_OP = 'UPDATE' 
     THEN
-       INSERT INTO logging.t_history (tabname, schemaname, operation,who, new_val, old_val) 
+       INSERT INTO logging.logs (tabname, schemaname, operation,who, new_val, old_val) 
        VALUES(TG_RELNAME, TG_TABLE_SCHEMA, TG_OP,  NEW.operation_by_user, row_to_json(NEW), row_to_json(OLD));
     RETURN NEW;
     END IF;

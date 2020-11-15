@@ -13,9 +13,3 @@ router.delete('/author/:author_id', verifyAuth, deleteAuthorSchema, deleteAuthor
 router.put('/author/:author_id', verifyAuth, updateAuthorSchema, updateAuthor);
 
 export default router;
-
-// ■ /author - POST - insert a new author with fields: first_first_name, last_name
-// ■ /author/{id} - DELETE - delete an author only if not linked to a book
-// ■ /author/{id} - PUT - update an author
-// ■ /author - GET - retrieve authors allowing filtering and paging
-// ■ /author/{id} - GET - retrieve a specific author

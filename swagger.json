@@ -27,6 +27,10 @@
         {
             "name": "Book",
             "description": "Book endpoints"
+        },
+        {
+            "name": "Logs",
+            "description": "Logs endpoints"
         }
     ],
     "components": {
@@ -1164,6 +1168,54 @@
                         "token": []
                     }
                 ]
+            }
+        },
+        "/logs": {
+            "get": {
+                "tags": [
+                    "Logs"
+                ],
+                "summary": "Get all Logs performed on a Table including Operation, User, Old value and New Value, and Time performed",
+                "parameters": [
+                    {
+                        "name": "entity",
+                        "in": "query",
+                        "description": "the name of the table you want to chck logs",
+                        "required": false,
+                        "type": "string"
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "number of items to fetch",
+                        "required": false,
+                        "type": "number"
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "description": "the row number from where you want to start fetching",
+                        "required": false,
+                        "type": "number"
+                    }
+                ],
+                "security": [
+                    {
+                        "token": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/definitions/GetAuthorsResponse"
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }

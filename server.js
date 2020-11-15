@@ -7,6 +7,7 @@ import usersRoute from './app/routes/usersRoute';
 import categoryRoutes from './app/routes/categoryRoutes';
 import bookRoutes from './app/routes/bookRoutes';
 import authorRoutes from './app/routes/authorRoutes';
+import logsRoutes from './app/routes/logsRoute';
 const app = express();
 
 app.use(cors());
@@ -20,6 +21,7 @@ app.use('/', usersRoute);
 app.use('/', categoryRoutes);
 app.use('/', authorRoutes);
 app.use('/', bookRoutes);
+app.use('/', logsRoutes);
 
 // app.use('/api/v1', usersRoute);
 // app.use('/api/v1', categoryRoutes);
