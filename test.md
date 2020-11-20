@@ -1,0 +1,1 @@
+#npm i axios lodash moment bootstrap react-router-dom react-select reactstrap toastr

@@ -233,7 +233,6 @@ const createAllTables = async () => {
     await createAuditSchema();
     await createAuditTable();
     await createChangeTriggerFunction();
-    // await createUserTrigger();
     await createAuthorTrigger();
     await createCategoryTrigger();
     await createBookTrigger();
@@ -241,11 +240,6 @@ const createAllTables = async () => {
 
     pool.end();
 
-    // createUserTable();
-    // createAuthorTable();
-    // createCategoryTable();
-    // createBookTable();
-    // createBookCategoryTable();
 }
 
 

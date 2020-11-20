@@ -111,6 +111,9 @@ WHERE  	1=1 `;
             getAllBooksQuery += ` OFFSET ${offset}`
         }
 
+
+        console.log(getAllBooksQuery)
+
         const { rows } = await dbQuery.query(getAllBooksQuery);
 
         let refactoredRes = refactorRows(rows)

@@ -17,9 +17,21 @@ const signupUser = async (req, res) => {
     const values = [name, username, email, hashedPassword];
 
     try {
-        const { rows } = await dbQuery.query(createUserQuery, values);
-        const dbResponse = rows[0];
+
+        const dbRes = await dbQuery.query(createUserQuery, values);
+        if (dbRes.name == "error") {
+            if (dbRes.code === '23505') {
+                let details = dbRes.constraint.split('_')[1]
+                console.log(details)
+                errorMessage.error = `${details} was already taken. Plese select another one`;
+                return res.status(status.conflict).send(errorMessage);
+            }
+            return res.status(status.error).send(errorMessage);
+        }
+
+        const dbResponse = dbRes.rows[0];
         delete dbResponse.password;
+        delete dbResponse.token;
 
         const { email, name, user_id, username, password } = dbResponse
         const token = generateUserToken(email, user_id, name, username);
@@ -27,6 +39,16 @@ const signupUser = async (req, res) => {
         successMessage.data = dbResponse;
         successMessage.data.token = token;
         return res.status(status.created).send(successMessage);
+        // const { rows } = await dbQuery.query(createUserQuery, values);
+        // const dbResponse = rows[0];
+        // delete dbResponse.password;
+
+        // const { email, name, user_id, username, password } = dbResponse
+        // const token = generateUserToken(email, user_id, name, username);
+
+        // successMessage.data = dbResponse;
+        // successMessage.data.token = token;
+        // return res.status(status.created).send(successMessage);
 
     } catch (error) {
         if (error.routine === '_bt_check_unique') {
@@ -35,7 +57,9 @@ const signupUser = async (req, res) => {
         }
 
         errorMessage.error = 'Operation was not successful';
-        console.log(error);
+        errorMessage.message = 'Operation was not successful';
+        console.log(error.code)
+        // console.log(error);
         return res.status(status.error).send(errorMessage);
     }
 };

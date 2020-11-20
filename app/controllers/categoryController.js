@@ -11,11 +11,14 @@ const createCategory = async (req, res) => {
     try {
         const createCategoryQuery = `INSERT INTO  categories( name, description,  operation_by_user) VALUES($1, $2, $3)
         returning *`;
-        const values = [name, description, req.user.username];
+        const values = [name, description, "Edvaldo"];
+        // const values = [name, description, req.user.username];
         const { rows } = await dbQuery.query(createCategoryQuery, values);
 
         const dbResponse = rows[0];
         successMessage.data = dbResponse;
+
+        console.log("CREATED CATEGORY: => ", dbResponse)
 
         return res.status(status.created).send(successMessage);
 
@@ -36,12 +39,18 @@ const getAllCategories = async (req, res) => {
     try {
         let getAllCategoriesQuery = buildGetAllCategoriesQuery(req.query);
 
-        console.log(req.user)
-
+        console.log(getAllCategoriesQuery)
         const { rows } = await dbQuery.query(getAllCategoriesQuery);
         const dbResponse = rows;
 
-        successMessage.data = dbResponse;
+        let refactoredRes = refactorGetAllCategoriesRes(dbResponse)
+
+
+        // successMessage.data = dbResponse;
+        // successMessage.data = refactoredRes;
+        // successMessage.count = dbResponse[0].count || 0;
+        successMessage.data = refactoredRes.data
+        successMessage.count = refactoredRes.count
         return res.status(status.success).send(successMessage);
     } catch (error) {
         console.log(error)
@@ -50,9 +59,28 @@ const getAllCategories = async (req, res) => {
     }
 };
 
+function refactorGetAllCategoriesRes(dbResponse) {
+
+    let data = (dbResponse || []).map(category => {
+        return {
+            "category_id": category.category_id,
+            "name": category.name,
+            "description": category.description,
+            "operation_by_user": category.operation_by_user
+        }
+    });
+
+    let res = {
+        data: data,
+        count: dbResponse && dbResponse[0] && dbResponse[0].full_count || 0
+    }
+
+    return res;
+}
+
 function buildGetAllCategoriesQuery(payload) {
     const { limit, offset, name } = payload;
-    let query = 'SELECT * FROM categories ';
+    let query = 'SELECT * , count(*) OVER() AS full_count FROM categories ';
 
     if (name) {
         query += ` WHERE LOWER(name) LIKE LOWER('%${name}%') `
@@ -79,9 +107,11 @@ const getCategory = async (req, res) => {
     try {
         const getAllCategoriesQuery = `SELECT * FROM categories WHERE category_id=$1 ORDER BY name DESC`;
         const { rows } = await dbQuery.query(getAllCategoriesQuery, [category_id]);
-        const dbResponse = rows[0] || {};
+        const dbResponse = (rows && rows[0]) || {};
 
         successMessage.data = dbResponse;
+
+        // console.log(successMessage)
         return res.status(status.success).send(successMessage);
     } catch (error) {
         console.log(error)
@@ -122,7 +152,8 @@ const updateCategory = async (req, res) => {
     try {
 
         const updateCategory = `UPDATE categories SET name=$1, description=$2 , operation_by_user=$3 WHERE category_id=$4  returning *`;
-        const values = [name, description, req.user.username, category_id];
+        const values = [name, description, "Edvaldo", category_id];
+        // const values = [name, description, req.user.username, category_id];
         const response = await dbQuery.query(updateCategory, values);
         const dbResult = response.rows[0];
 
