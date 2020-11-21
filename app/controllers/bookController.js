@@ -237,8 +237,9 @@ const getBook = async (req, res) => {
 };
 
 function buildGetBookQuery(isbn_number) {
-    let query = `SELECT b.isbn_number, b.name, b.author, b.year_published
-                ,a.first_name, a.last_name , categoriesByIsbnResult.categories
+    let query = `SELECT b.isbn_number, b.name as book_name, b.author as author_id, b.year_published
+                        ,a.first_name as author_name, a.last_name as author_last_name , 
+                        categoriesByIsbnResult.categories 
                 FROM books AS b 
                 JOIN authors AS a ON a.author_id = b.author 
                 LEFT JOIN (
