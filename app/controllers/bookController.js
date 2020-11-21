@@ -4,6 +4,7 @@ import dbQuery from '../db/dev/db_Query';
 import { empty, isEmpty } from '../helpers/validation';
 import { errorMessage, successMessage, status } from '../helpers/status';
 import pool from '../db/dev/pool';
+import { query } from 'express';
 
 const createBook = async (req, res) => {
     const { author, name, categories, isbn_number, year_published } = req.body;
@@ -119,6 +120,7 @@ WHERE  	1=1 `;
         let refactoredRes = refactorRows(rows)
 
         successMessage.data = refactoredRes;
+        successMessage.count = refactoredRes.length
 
         return res.status(status.success).send(successMessage);
     } catch (error) {
@@ -175,15 +177,15 @@ function refactorRows(rows) {
         if (isBookFound > -1) {
             books[isBookFound].categories.push({
                 category_id: book.category_id,
-                category_name: book.category_name,
-                category_description: book.category_description
+                name: book.category_name,
+                description: book.category_description
             })
         } else {
             book.categories = [
                 {
                     category_id: book.category_id,
-                    category_name: book.category_name,
-                    category_description: book.category_description
+                    name: book.category_name,
+                    description: book.category_description
                 }
             ];
             books.push(book)
@@ -199,17 +201,33 @@ const getBook = async (req, res) => {
     const { isbn_number } = req.params;
 
     try {
-        const getAllBooksQuery = `SELECT * FROM books WHERE isbn_number=$1 ORDER BY name DESC`;
-        const { rows } = await dbQuery.query(getAllBooksQuery, [isbn_number]);
+
+        const getAllBooksQuery = buildGetBookQuery(isbn_number);
+        const { rows } = await dbQuery.query(getAllBooksQuery);
         const dbResponse = rows[0];
 
-        let categories = await getCategoriesByISBN(isbn_number)
-        if (categories && categories.length > 0) {
-            dbResponse.categories = categories
-        }
+        // let categories = await getCategoriesByISBN(isbn_number)
+        // if (categories && categories.length > 0) {
+        //     dbResponse.categories = categories
+        // }
 
+        delete successMessage.count;
         successMessage.data = dbResponse || {};
+        console.log(successMessage)
         return res.status(status.success).send(successMessage);
+        // const getAllBooksQuery = `SELECT * FROM books WHERE isbn_number=$1`;
+        // const { rows } = await dbQuery.query(getAllBooksQuery, [isbn_number]);
+        // const dbResponse = rows[0];
+
+        // let categories = await getCategoriesByISBN(isbn_number)
+        // if (categories && categories.length > 0) {
+        //     dbResponse.categories = categories
+        // }
+
+        // delete successMessage.count;
+        // successMessage.data = dbResponse || {};
+        // console.log(successMessage)
+        // return res.status(status.success).send(successMessage);
 
     } catch (error) {
         console.log(error)
@@ -218,6 +236,32 @@ const getBook = async (req, res) => {
     }
 };
 
+function buildGetBookQuery(isbn_number) {
+    let query = `SELECT b.isbn_number, b.name, b.author, b.year_published
+                ,a.first_name, a.last_name , categoriesByIsbnResult.categories
+                FROM books AS b 
+                JOIN authors AS a ON a.author_id = b.author 
+                LEFT JOIN (
+                            SELECT 
+                            t.isbn_number,
+                            array_to_json(array_agg(t)) AS categories
+                        FROM (
+                            SELECT c.category_id, bc.isbn_number, c.name
+                            FROM book_categories  AS bc
+                            JOIN categories AS c ON bc.category_id = c.category_id
+                            WHERE bc.isbn_number ='${isbn_number}'
+                        ) as t 
+                        GROUP BY t.isbn_number
+                        ) AS categoriesByIsbnResult
+                ON b.isbn_number = categoriesByIsbnResult.isbn_number
+                WHERE b.isbn_number= '${isbn_number}' 
+    `;
+
+
+    return query;
+
+}
+
 async function getCategoriesByISBN(isbn_number) {
 
     try {
@@ -225,6 +269,7 @@ async function getCategoriesByISBN(isbn_number) {
         let insertBookCategoryQuery = `SELECT c.category_id , c.name, c.description 
         FROM book_categories AS bc
         JOIN categories AS c ON c.category_id = bc.category_id
+        JOIN authors AS a ON a.author_id = 
         WHERE isbn_number = $1`;
         const { rows } = await dbQuery.query(insertBookCategoryQuery, [isbn_number]);
         return rows
