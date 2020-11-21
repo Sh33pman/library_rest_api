@@ -31,6 +31,7 @@ const verifyToken = async (req, res, next) => {
             username: decoded.username,
         };
 
+
         next();
     } catch (error) {
         errorMessage.error = 'Failed To Authenticate';

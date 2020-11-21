@@ -97,7 +97,32 @@ const siginUser = async (req, res) => {
     }
 };
 
+
+const getUser = async (req, res) => {
+    const { user_id } = req.user;
+
+
+    try {
+        const getAllCategoriesQuery = `SELECT * FROM users WHERE user_id=$1 `;
+        console.log(getAllCategoriesQuery)
+        const { rows } = await dbQuery.query(getAllCategoriesQuery, [user_id]);
+        const dbResponse = (rows && rows[0]) || {};
+        delete dbResponse.password;
+        successMessage.data = dbResponse;
+
+        // console.log(successMessage)
+        return res.status(status.success).send(successMessage);
+    } catch (error) {
+        console.log("---------ERROR WHILE FETCHING USERS-----------")
+        console.log(error)
+        errorMessage.error = 'An error occured while trying to fetch users';
+        return res.status(status.error).send(errorMessage);
+    }
+};
+
+
 export {
     signupUser,
     siginUser,
+    getUser,
 };

@@ -11,8 +11,8 @@ const createCategory = async (req, res) => {
     try {
         const createCategoryQuery = `INSERT INTO  categories( name, description,  operation_by_user) VALUES($1, $2, $3)
         returning *`;
-        const values = [name, description, "Edvaldo"];
-        // const values = [name, description, req.user.username];
+        // const values = [name, description, "Edvaldo"];
+        const values = [name, description, req.user.username];
         const { rows } = await dbQuery.query(createCategoryQuery, values);
 
         const dbResponse = rows[0];
@@ -39,7 +39,7 @@ const getAllCategories = async (req, res) => {
     try {
         let getAllCategoriesQuery = buildGetAllCategoriesQuery(req.query);
 
-        console.log(getAllCategoriesQuery)
+        // console.log(getAllCategoriesQuery)
         const { rows } = await dbQuery.query(getAllCategoriesQuery);
         const dbResponse = rows;
 
@@ -88,14 +88,23 @@ function buildGetAllCategoriesQuery(payload) {
 
     query += ` ORDER BY name DESC `;
 
-    if (limit) {
-        query += ` LIMIT ${limit}`
-    }
 
-    if (offset) {
+
+
+    if (limit && parseInt(limit) !== -1) {
+        query += ` LIMIT ${limit}`
         query += ` OFFSET ${offset}`
     }
 
+    // if (limit) {
+    //     query += ` LIMIT ${limit}`
+    // }
+
+    // if (offset) {
+    //     query += ` OFFSET ${offset}`
+    // }
+
+    // console.log(query)
     return query;
 
 }
@@ -152,8 +161,8 @@ const updateCategory = async (req, res) => {
     try {
 
         const updateCategory = `UPDATE categories SET name=$1, description=$2 , operation_by_user=$3 WHERE category_id=$4  returning *`;
-        const values = [name, description, "Edvaldo", category_id];
-        // const values = [name, description, req.user.username, category_id];
+        // const values = [name, description, "Edvaldo", category_id];
+        const values = [name, description, req.user.username, category_id];
         const response = await dbQuery.query(updateCategory, values);
         const dbResult = response.rows[0];
 

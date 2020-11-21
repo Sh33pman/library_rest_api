@@ -36,8 +36,15 @@ const getAllAuthors = async (req, res) => {
         const { rows } = await dbQuery.query(getAllAuthorsQuery);
         const dbResponse = rows;
 
-        successMessage.data = dbResponse;
+        let refactoredRes = refactorGetAllCategoriesRes(dbResponse)
+
+        successMessage.data = refactoredRes.data
+        successMessage.count = refactoredRes.count
+
         return res.status(status.success).send(successMessage);
+        // const dbResponse = rows;
+        // successMessage.data = dbResponse;
+        // return res.status(status.success).send(successMessage);
     } catch (error) {
         console.log(error)
         errorMessage.error = 'An error occured while trying to fetch authors';
@@ -45,9 +52,28 @@ const getAllAuthors = async (req, res) => {
     }
 };
 
+function refactorGetAllCategoriesRes(dbResponse) {
+
+    let data = (dbResponse || []).map(author => {
+        return {
+            "author_id": author.author_id,
+            "first_name": author.first_name,
+            "last_name": author.last_name,
+            "operation_by_user": author.operation_by_user
+        }
+    });
+
+    let res = {
+        data: data,
+        count: dbResponse && dbResponse[0] && dbResponse[0].full_count || 0
+    }
+
+    return res;
+}
+
 function buildGetAllAuthorsQuery(payload) {
     const { limit, offset, last_name, first_name } = payload;
-    let query = `SELECT * FROM authors `;
+    let query = `SELECT *, count(*) OVER() AS full_count  FROM authors `;
 
     let isSearchCriteriaProvided = !(isEmpty(last_name) && isEmpty(first_name));
 
@@ -65,13 +91,17 @@ function buildGetAllAuthorsQuery(payload) {
 
     query += ` ORDER BY first_name DESC `;
 
-    if (limit) {
+    if (limit && parseInt(limit) !== -1) {
         query += ` LIMIT ${limit}`
-    }
-
-    if (offset) {
         query += ` OFFSET ${offset}`
     }
+    // if (limit) {
+    //     query += ` LIMIT ${limit}`
+    // }
+
+    // if (offset) {
+    //     query += ` OFFSET ${offset}`
+    // }
 
     return query
 
