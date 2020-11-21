@@ -263,23 +263,23 @@ function buildGetBookQuery(isbn_number) {
 
 }
 
-async function getCategoriesByISBN(isbn_number) {
+// async function getCategoriesByISBN(isbn_number) {
 
-    try {
+//     try {
 
-        let insertBookCategoryQuery = `SELECT c.category_id , c.name, c.description 
-        FROM book_categories AS bc
-        JOIN categories AS c ON c.category_id = bc.category_id
-        JOIN authors AS a ON a.author_id = 
-        WHERE isbn_number = $1`;
-        const { rows } = await dbQuery.query(insertBookCategoryQuery, [isbn_number]);
-        return rows
-    } catch (error) {
-        console.log("Failed to get All categories")
-        console.log(error)
-        return [];
-    }
-}
+//         let insertBookCategoryQuery = `SELECT c.category_id , c.name, c.description 
+//         FROM book_categories AS bc
+//         JOIN categories AS c ON c.category_id = bc.category_id
+//         JOIN authors AS a ON a.author_id = 
+//         WHERE isbn_number = $1`;
+//         const { rows } = await dbQuery.query(insertBookCategoryQuery, [isbn_number]);
+//         return rows
+//     } catch (error) {
+//         console.log("Failed to get All categories")
+//         console.log(error)
+//         return [];
+//     }
+// }
 
 const deleteBook = async (req, res) => {
     const { isbn_number } = req.params;
@@ -317,27 +317,44 @@ const updateBook = async (req, res) => {
     try {
         await pool.query("BEGIN");
         let updateBookQuery = ``;
-        updateBookQuery += buildUpdateBookQuery(req, isbn_number)
+        let deleteOldCategoriesQuery = `DELETE FROM book_categories WHERE isbn_number = '${isbn_number}'`;
+        let deletedOldBookCategories = await dbQuery.query(deleteOldCategoriesQuery);
 
-        const response = await dbQuery.query(updateBookQuery);
-        const dbResult = response.rows[0];
-        successMessage.data = dbResult;
+        // console.log("DELETED CATEGORIES: => ", deletedOldBookCategories)
 
-        let categories = await updateBookCategories(req, isbn_number)
+        updateBookQuery += updateBookAndInsertBookCategories(req, isbn_number)
 
+        const updatedBookDBResponse = await dbQuery.query(updateBookQuery);
+        const updatedBookRes = updatedBookDBResponse.rows;
 
-        if (!dbResult || dbResult === null) {
+        // console.log("UPDATED BOOK RESPONSE: => ", updatedBookDBResponse)
+
+        if (!updatedBookRes || updatedBookRes === null) {
             pool.query("ROLLBACK");
-            errorMessage.error = 'Failed to update Book. ISBN was not found';
+            errorMessage.error = 'Failed to update Book';
+            // errorMessage.error = 'Failed to update Book. ISBN was not found';
             return res.status(status.error).send(errorMessage);
         }
 
+        let categories = await getCategoriesByISBN(isbn_number)
         if (!categories || categories === null) {
             pool.query("ROLLBACK");
             errorMessage.error = 'Failed to update Book';
             return res.status(status.error).send(errorMessage);
         }
 
+        // console.log("INSERTED CATEGORIES => ", categories)
+
+        let getUpdatedBookQuery = `SELECT b.isbn_number, b.name as book_name, b.year_published, a.first_name as author_name, a.last_name as author_last_name,a.author_id 
+        FROM books b
+        JOIN authors AS a ON a.author_id = b.author
+        WHERE isbn_number = '${isbn_number}'`;
+
+        let updatedBook = await dbQuery.query(getUpdatedBookQuery);
+
+        // console.log("UPDATED BOOK FETCHED => ", updatedBook)
+
+        successMessage.data = updatedBook.rows[0];
         successMessage.data.categories = categories
         pool.query("COMMIT");
         return res.status(status.success).send(successMessage);
@@ -351,56 +368,165 @@ const updateBook = async (req, res) => {
     }
 };
 
-function buildUpdateBookQuery(req, isbn_number) {
+function updateBookAndInsertBookCategories(req, isbn_number) {
     const { author, name, categories, year_published } = req.body;
-    let updateBookQuery = `UPDATE books SET `;
 
-    if (author) {
-        updateBookQuery += ` author = ${author}, `;
+    let query = ` WITH updateBook AS (
+        UPDATE books SET `;
+
+    if (name && name !== "") {
+        query += `name = '${name}', `
     }
 
-    updateBookQuery += ` operation_by_user = '${req.user.username}', `;
-
-    if (name) {
-        updateBookQuery += ` name = '${name}', `;
+    if (author && author !== "") {
+        query += `author = ${author} ,`
     }
 
-    if (year_published) {
-        updateBookQuery += ` year_published = '${year_published}'`;
+    if (year_published && year_published !== "") {
+        query += `year_published = '${year_published}' ,`
     }
 
-    updateBookQuery = updateBookQuery.replace(/,\s*$/, "");
+    query += `operation_by_user = '${req.user.username}' `
 
+    query += `
+                    WHERE isbn_number = '${isbn_number}'
+                    RETURNING *
+                )
+        INSERT INTO book_categories (category_id, isbn_number, operation_by_user)
+        VALUES `;
 
-    updateBookQuery += ` WHERE isbn_number = '${isbn_number}'  returning *`;
-    return updateBookQuery;
+    let values = ``;
+    (categories || []).forEach(item => {
+        values += `(${item}, '${isbn_number}', '${req.user.username}'),`
+    });
+
+    values = values.replace(/,\s*$/, "");
+
+    query += values;
+
+    query += ` RETURNING *;`;
+
+    // console.log(query);
+
+    return query
+
 }
 
-async function updateBookCategories(req, isbn_number) {
-    const { categories } = req.body;
+async function getCategoriesByISBN(isbn_number) {
+
     try {
-        let values = ``;
-        (categories || []).forEach(item => {
-            values += `(${item.new}, ${isbn_number}, ${item.old}, '${req.user.username}'),`
-        });
+        let query = `SELECT c.category_id, c.name 
+        FROM categories c
+        JOIN book_categories AS bc ON c.category_id = bc.category_id
+        WHERE bc.isbn_number = '${isbn_number}'`;
 
-        values = values.replace(/,\s*$/, "");
+        let categories = await dbQuery.query(query);
 
-        let updateBookCategoryQuery = `update public.book_categories as bc set
-        category_id = c.category_id, operation_by_user = c.operation_by_user 
-        from (values ${values}) as c(category_id, isbn_number, old_category_id, operation_by_user) 
-        where bc.isbn_number::int = c.isbn_number AND c.old_category_id = bc.category_id returning *`;
+        // console.log("NEW CATEGORIES RES: => ", categories)
+        if (categories.rows) {
+            return categories.rows
+        } else {
+            return []
+        }
 
-
-        const { rows } = await dbQuery.query(updateBookCategoryQuery);
-        let result = (rows || []).map(item => item.category_id)
-        return result;
     } catch (error) {
-        console.log("UPDATE BOOKS CATEGORY ERROR")
+        console.log("GET BOOKS CATEGORIES ERROR")
         console.log(error);
-        return null
+        pool.query("ROLLBACK");
+        return null;
     }
+
 }
+// const updateBook = async (req, res) => {
+//     const { isbn_number } = req.params;
+
+//     try {
+//         await pool.query("BEGIN");
+//         let updateBookQuery = ``;
+//         updateBookQuery += buildUpdateBookQuery(req, isbn_number)
+
+//         const response = await dbQuery.query(updateBookQuery);
+//         const dbResult = response.rows[0];
+//         successMessage.data = dbResult;
+
+//         let categories = await updateBookCategories(req, isbn_number)
+
+
+//         if (!dbResult || dbResult === null) {
+//             pool.query("ROLLBACK");
+//             errorMessage.error = 'Failed to update Book. ISBN was not found';
+//             return res.status(status.error).send(errorMessage);
+//         }
+
+//         if (!categories || categories === null) {
+//             pool.query("ROLLBACK");
+//             errorMessage.error = 'Failed to update Book';
+//             return res.status(status.error).send(errorMessage);
+//         }
+
+//         successMessage.data.categories = categories
+//         pool.query("COMMIT");
+//         return res.status(status.success).send(successMessage);
+//     } catch (error) {
+//         console.log("UPDATE BOOKS ERROR")
+
+//         console.log(error);
+//         pool.query("ROLLBACK");
+//         errorMessage.error = 'Failed to update Book';
+//         return res.status(status.error).send(errorMessage);
+//     }
+// };
+
+// function buildUpdateBookQuery(req, isbn_number) {
+//     const { author, name, categories, year_published } = req.body;
+//     let updateBookQuery = `UPDATE books SET `;
+
+//     if (author) {
+//         updateBookQuery += ` author = ${author}, `;
+//     }
+
+//     updateBookQuery += ` operation_by_user = '${req.user.username}', `;
+
+//     if (name) {
+//         updateBookQuery += ` name = '${name}', `;
+//     }
+
+//     if (year_published) {
+//         updateBookQuery += ` year_published = '${year_published}'`;
+//     }
+
+//     updateBookQuery = updateBookQuery.replace(/,\s*$/, "");
+
+
+//     updateBookQuery += ` WHERE isbn_number = '${isbn_number}'  returning *`;
+//     return updateBookQuery;
+// }
+
+// async function updateBookCategories(req, isbn_number) {
+//     const { categories } = req.body;
+//     try {
+//         let values = ``;
+//         (categories || []).forEach(item => {
+//             values += `(${item.new}, ${isbn_number}, ${item.old}, '${req.user.username}'),`
+//         });
+
+//         values = values.replace(/,\s*$/, "");
+
+//         let updateBookCategoryQuery = `update public.book_categories as bc set
+//         category_id = c.category_id, operation_by_user = c.operation_by_user 
+//         from (values ${values}) as c(category_id, isbn_number, old_category_id, operation_by_user) 
+//         where bc.isbn_number::int = c.isbn_number AND c.old_category_id = bc.category_id returning *`;
+
+
+//         const { rows } = await dbQuery.query(updateBookCategoryQuery);
+//         let result = (rows || []).map(item => item.category_id)
+//         return result;
+//     } catch (error) {
+//         console.log("UPDATE BOOKS CATEGORY ERROR")
+//         console.log(error);
+//         return null
+//     }
+// }
 
 export {
     createBook,

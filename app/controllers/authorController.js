@@ -85,7 +85,8 @@ function buildGetAllAuthorsQuery(payload) {
         }
 
         if (last_name) {
-            query += `${first_name ? "OR " : ""} LOWER(last_name) LIKE LOWER('%${last_name}%') `
+            query += `${first_name ? "AND " : ""} LOWER(last_name) LIKE LOWER('%${last_name}%') `
+            // query += `${first_name ? "OR " : ""} LOWER(last_name) LIKE LOWER('%${last_name}%') `
         }
     }
 

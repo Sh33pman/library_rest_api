@@ -42,10 +42,11 @@ const updateBookSchema = (req, res, next) => {
         year_published: Joi.date()
             .format("YYYY"),
         categories: Joi.array().items(
-            Joi.object().keys({
-                old: Joi.number().required(),
-                new: Joi.number().required()
-            })
+            Joi.number()
+            // Joi.object().keys({
+            //     old: Joi.number().required(),
+            //     new: Joi.number().required()
+            // })
         ).required().min(1),
     });
 

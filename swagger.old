@@ -493,8 +493,17 @@
                 "categories": {
                     "type": "array",
                     "items": {
-                        "type": "number",
-                        "example": 1
+                        "type": "object",
+                        "properties": {
+                            "old": {
+                                "type": "number",
+                                "example": 15
+                            },
+                            "new": {
+                                "type": "number",
+                                "example": 5
+                            }
+                        }
                     }
                 },
                 "year_published": {
