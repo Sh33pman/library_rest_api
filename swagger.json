@@ -657,6 +657,37 @@
                     "example": "1"
                 }
             }
+        },
+        "LoadDummyDataResponse": {
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                },
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "properties": {
+                            "categories": {
+                                "type": "number",
+                                "example": 10
+                            },
+                            "authors": {
+                                "type": "number",
+                                "example": 10
+                            },
+                            "books": {
+                                "type": "number",
+                                "example": 10
+                            },
+                            "book_categories": {
+                                "type": "number",
+                                "example": 10
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "paths": {
@@ -1310,7 +1341,7 @@
                 "tags": [
                     "Logs"
                 ],
-                "summary": "Get all Logs performed on a Table including Operation, User, Old value and New Value, and Time performed",
+                "summary": "Get all Logs performed on a Table including Operation, User, Old value and New Value, and Time performed. DO NOT EXECUTE MORE THAN ONCE IF IT INSERTED SUCCESSFULLY ON THE FIRST TRY",
                 "parameters": [
                     {
                         "name": "entity",
@@ -1346,6 +1377,26 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/definitions/GetLogsResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/load_data": {
+            "get": {
+                "tags": [
+                    "Dummy Data"
+                ],
+                "summary": "Loads the databse with a couple of rows for testing (Categories, books, Athors, Book Categories)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/definitions/LoadDummyDataResponse"
                                 }
                             }
                         }

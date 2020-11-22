@@ -6,7 +6,7 @@
   "scripts": {
     "create-dev-tables": "babel-node ./app/db/dev/db_connection createAllTables",
     "start": "nodemon --watch . --exec babel-node -- server",
-    "setup": "npm-run-all -p start create-dev-tables",
+    "setup": "npm-run-all -p  create-dev-tables start",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

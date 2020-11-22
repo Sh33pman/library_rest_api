@@ -1,5 +1,9 @@
 // @ts-check
 import pool from './pool';
+var pgtools = require("pgtools");
+
+import dotenv from 'dotenv';
+import { query } from 'express';
 
 pool.on('connect', () => {
     console.log('Conneted to DB')
@@ -153,103 +157,177 @@ const createBookCategoryTrigger = async () => {
 }
 
 
-const dropUserTable = () => {
-    const dropUserTableQuery = 'DROP TABLE IF EXISTS users';
-    pool.query(dropUserTableQuery)
-        .then((res) => {
-            console.log(res);
-            pool.end();
-        })
-        .catch((err) => {
-            console.log(err);
-            pool.end();
-        });
-};
-
-const dropAuthorTable = () => {
-    const dropAuthorTableQuery = 'DROP TABLE IF EXISTS authors';
-    pool.query(dropAuthorTableQuery)
-        .then((res) => {
-            console.log(res);
-            pool.end();
-        })
-        .catch((err) => {
-            console.log(err);
-            pool.end();
-        });
-};
 
 
-const dropCategoryTable = () => {
-    const dropCategoryTableQuery = 'DROP TABLE IF EXISTS categories';
-    pool.query(dropCategoryTableQuery)
-        .then((res) => {
-            console.log(res);
-            pool.end();
-        })
-        .catch((err) => {
-            console.log(err);
-            pool.end();
-        });
-};
+
+// const createAllTables = async () => {
+
+//     // Add everything in a transaction
+
+//     await createUserTable();
+//     await createAuthorTable();
+//     await createCategoryTable();
+//     await createBookTable();
+//     await createBookCategoryTable();
+
+//     await createAuditSchema();
+//     await createAuditTable();
+//     await createChangeTriggerFunction();
+//     await createAuthorTrigger();
+//     await createCategoryTrigger();
+//     await createBookTrigger();
+//     await createBookCategoryTrigger();
 
 
-const dropBookTable = () => {
-    const dropBookTableQuery = 'DROP TABLE IF EXISTS books';
-    pool.query(dropBookTableQuery)
-        .then((res) => {
-            console.log(res);
-            pool.end();
-        })
-        .catch((err) => {
-            console.log(err);
-            pool.end();
-        });
-};
 
+//     pool.end();
 
-const dropBookCategoryTable = () => {
-    const dropBookGenreTableQuery = 'DROP TABLE IF EXISTS book_categories';
-    pool.query(dropBookGenreTableQuery)
-        .then((res) => {
-            console.log(res);
-            pool.end();
-        })
-        .catch((err) => {
-            console.log(err);
-            pool.end();
-        });
-};
-
+// }
 
 const createAllTables = async () => {
 
-    await createUserTable();
-    await createAuthorTable();
-    await createCategoryTable();
-    await createBookTable();
-    await createBookCategoryTable();
+    let isExitDb = await checkDb();
 
-    await createAuditSchema();
-    await createAuditTable();
-    await createChangeTriggerFunction();
-    await createAuthorTrigger();
-    await createCategoryTrigger();
-    await createBookTrigger();
-    await createBookCategoryTrigger();
+    console.log(` 💾  => ATTEMPTING TO CREATE TABLES CReating Tables...`)
+
+    try {
+        let createUser = await createUserTable();
+        let createAuthor = await createAuthorTable();
+        let createCategories = await createCategoryTable();
+        let createBook = await createBookTable();
+        let createBookCategory = await createBookCategoryTable();
+
+        let _createAuditSchema = await createAuditSchema();
+        let createAudit = await createAuditTable();
+        let createChangeTrigger = await createChangeTriggerFunction();
+        let createuthorTrigger = await createAuthorTrigger();
+        let _createCategoryTrigger = await createCategoryTrigger();
+        let _createBookTrigger = await createBookTrigger();
+        let _createBookCategoryTrigger = await createBookCategoryTrigger();
+
+        console.log(`✅  => TABLES CREATED ...`)
+        console.log(`✅  => TRIGGERS CREATED ...`)
+
+
+    } catch (error) {
+        console.log(error.code)
+
+        if (error.code === '28000') {
+            console.log(`================================================================`)
+            console.log(`❌  Failed to create db. Invalid Username. Change the .env file with a valid DATABASE_USER`)
+            console.log(`==================================================================`)
+            process.exit(1)
+        }
+
+        if (error.code === '28P01') {
+            console.log(`================================================================`)
+            console.log(`❌  Failed to create db. Invalid Password. Change the .env file with a valid DATABASE_PASSWORD`)
+            console.log(`==================================================================`)
+            process.exit(1)
+        }
+    }
+
+
+
 
     pool.end();
 
 }
 
+async function checkDb() {
+    try {
+        let res = await isDBUp();
+        return res
+    } catch (error) {
+        let invalid_catalog_name = '3D000';
 
-const dropAllTables = () => {
-    dropUserTable();
-    dropAuthorTable();
-    dropCategoryTable();
-    dropBookTable();
-    dropBookCategoryTable();
+        if (error.code === invalid_catalog_name) {
+            console.log(`================================================================`)
+            console.log(`❌  ${error['message']}. ATTEMPTING TO CREATE A NEW ONE...`)
+            console.log(`==================================================================`)
+        }
+
+        if (error.code === '28000') {
+            console.log(`================================================================`)
+            console.log(`❌  Failed to create db. Invalid Username. Change the .env file with a valid DATABASE_USER`)
+            console.log(`==================================================================`)
+            process.exit(1)
+        }
+
+        if (error.code === '28P01') {
+            console.log(`================================================================`)
+            console.log(`❌  Failed to create db. Invalid Password. Change the .env file with a valid DATABASE_PASSWORD`)
+            console.log(`==================================================================`)
+            process.exit(1)
+        }
+
+        let createDbRes = await CreateDatabase();
+
+        if (createDbRes['command'].toLowerCase().includes("create")) {
+            console.log(`✅  => ${process.env.DATABASE_NAME}  DATABASE CREATED ...`)
+        }
+
+        return true
+    }
 }
+
+async function isDBUp() {
+    try {
+        const res = await pool.query(`SELECT datname FROM pg_catalog.pg_database WHERE lower(datname) = lower('${process.env.DATABASE_NAME}');`);
+        return res;
+    } catch (error) {
+        // pool.end();
+        throw error
+    }
+}
+
+async function CreateDatabase() {
+
+    const config = {
+        user: process.env.DATABASE_USER,
+        host: process.env.DATABASE_HOST,
+        password: process.env.DATABASE_PASSWORD,
+        port: process.env.DATABASE_PORT
+    };
+
+
+    if (!config.password || (config.password && config.password === "")) {
+        delete config.password;
+    }
+
+    let res;
+    try {
+        res = await pgtools.createdb(config, `${process.env.DATABASE_NAME}`, function (err, res) {
+            if (err) {
+                // return err;
+                // process.exit(-1);
+                throw err
+            }
+
+            return res;
+            //   console.log(res);
+        });
+
+    } catch (error) {
+        if (error.code === '28000') {
+            console.log(`================================================================`)
+            console.log(`❌  Failed to create db. Invalid Username. Change the .env file with a valid DATABASE_USER`)
+            console.log(`==================================================================`)
+            process.exit(1)
+        }
+
+        if (error.code === '28P01') {
+            console.log(`================================================================`)
+            console.log(`❌  Failed to create db. Invalid Password. Change the .env file with a valid DATABASE_PASSWORD`)
+            console.log(`==================================================================`)
+            process.exit(1)
+        }
+    }
+
+    return res
+
+}
+
 
 pool.on('remove', () => {
     console.log('user removed');
@@ -258,8 +336,7 @@ pool.on('remove', () => {
 
 
 export {
-    createAllTables,
-    dropAllTables
+    createAllTables
 }
 
 require('make-runnable');

@@ -8,6 +8,7 @@ import categoryRoutes from './app/routes/categoryRoutes';
 import bookRoutes from './app/routes/bookRoutes';
 import authorRoutes from './app/routes/authorRoutes';
 import logsRoutes from './app/routes/logsRoute';
+import dummyDataRoute from './app/routes/dummyDataRoute';
 const app = express();
 
 app.use(cors());
@@ -22,6 +23,7 @@ app.use('/', categoryRoutes);
 app.use('/', authorRoutes);
 app.use('/', bookRoutes);
 app.use('/', logsRoutes);
+app.use('/', dummyDataRoute);
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 
