@@ -1341,7 +1341,7 @@
                 "tags": [
                     "Logs"
                 ],
-                "summary": "Get all Logs performed on a Table including Operation, User, Old value and New Value, and Time performed. DO NOT EXECUTE MORE THAN ONCE IF IT INSERTED SUCCESSFULLY ON THE FIRST TRY",
+                "summary": "Get all Logs performed on a Table including Operation, User, Old value and New Value, and Time performed. ",
                 "parameters": [
                     {
                         "name": "entity",
@@ -1389,7 +1389,7 @@
                 "tags": [
                     "Dummy Data"
                 ],
-                "summary": "Loads the databse with a couple of rows for testing (Categories, books, Athors, Book Categories)",
+                "summary": "Loads the databse with a couple of rows for testing (Categories, books, Athors, Book Categories). DO NOT EXECUTE MORE THAN ONCE IF IT INSERTED SUCCESSFULLY ON THE FIRST TRY",
                 "responses": {
                     "200": {
                         "description": "OK",
