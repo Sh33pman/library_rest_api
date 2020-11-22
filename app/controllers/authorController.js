@@ -21,7 +21,6 @@ const createAuthor = async (req, res) => {
         return res.status(status.created).send(successMessage);
 
     } catch (error) {
-
         console.log(error)
         errorMessage.error = 'Unable to create Author';
         return res.status(status.error).send(errorMessage);
@@ -43,9 +42,6 @@ const getAllAuthors = async (req, res) => {
         successMessage.count = refactoredRes.count
 
         return res.status(status.success).send(successMessage);
-        // const dbResponse = rows;
-        // successMessage.data = dbResponse;
-        // return res.status(status.success).send(successMessage);
     } catch (error) {
         console.log(error)
         errorMessage.error = 'An error occured while trying to fetch authors';
@@ -87,7 +83,6 @@ function buildGetAllAuthorsQuery(payload) {
 
         if (last_name) {
             query += `${first_name ? "AND " : ""} LOWER(last_name) LIKE LOWER('%${last_name}%') `
-            // query += `${first_name ? "OR " : ""} LOWER(last_name) LIKE LOWER('%${last_name}%') `
         }
     }
 
@@ -97,14 +92,6 @@ function buildGetAllAuthorsQuery(payload) {
         query += ` LIMIT ${limit}`
         query += ` OFFSET ${offset}`
     }
-    // if (limit) {
-    //     query += ` LIMIT ${limit}`
-    // }
-
-    // if (offset) {
-    //     query += ` OFFSET ${offset}`
-    // }
-
     return query
 
 
@@ -140,8 +127,6 @@ const deleteAuthor = async (req, res) => {
 
     try {
         const deleteAuthorQuery = 'DELETE FROM authors WHERE author_id=$1 returning *';
-        // const { rows } = await dbQuery.query(deleteAuthorQuery, [author_id]);
-        // const dbResponse = rows[0];
         const dbResponse = await dbQuery.query(deleteAuthorQuery, [author_id]);
 
         if (dbResponse && dbResponse.code === "23503") {
@@ -181,7 +166,6 @@ const updateAuthor = async (req, res) => {
             errorMessage.error = 'Failed to update Author. Id not found';
             return res.status(status.error).send(errorMessage);
         }
-
 
         delete successMessage.count
         successMessage.data = dbResult;

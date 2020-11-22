@@ -23,11 +23,7 @@ const createBook = async (req, res) => {
             return res.status(status.conflict).send(errorMessage);
         }
 
-        // if (rows.length === 0) {
-        //     errorMessage.error = 'Failed to ';
-        //     return res.status(status.conflict).send(errorMessage);
-        // }
-        console.log(inserBookDBResponse)
+        // console.log(inserBookDBResponse)
 
         const dbResponse = (inserBookDBResponse && inserBookDBResponse.rows && inserBookDBResponse.rows[0]) || null;
 
@@ -116,20 +112,15 @@ const getAllBooks = async (req, res) => {
             getAllBooksQuery += ` OFFSET ${offset}`
         }
 
-
-
-        console.log("===================GET ALL BOOKS ====================== \n ", getAllBooksQuery)
+        // console.log("===================GET ALL BOOKS ====================== \n ", getAllBooksQuery)
 
         const { rows } = await dbQuery.query(getAllBooksQuery);
 
         let count = (rows && rows[0] && rows[0].full_count) || 0
         let refactoredRes = refactorRows(rows)
 
-        // successMessage.count = (rows && rows.length) || 0
         successMessage.data = refactoredRes;
         successMessage.count = count
-        // successMessage.data = rows;
-
         return res.status(status.success).send(successMessage);
     } catch (error) {
         console.log(error)
@@ -229,7 +220,6 @@ function isSearchCriteriaProvided(params) {
     const { author_first_name, author_last_name, book_name, isbn_number, year_published, category } = params
     return !(isEmpty(author_first_name) && isEmpty(author_last_name) && isEmpty(book_name) && isEmpty(isbn_number) && isEmpty(year_published) && isEmpty(category))
 
-
 }
 
 function refactorRows(rows) {
@@ -239,16 +229,13 @@ function refactorRows(rows) {
         delete item.full_count
         books.push(item)
     })
-
     return books
-
 }
 
 const getBook = async (req, res) => {
     const { isbn_number } = req.params;
 
     try {
-
         const getAllBooksQuery = buildGetBookQuery(isbn_number);
         const { rows } = await dbQuery.query(getAllBooksQuery);
         const dbResponse = rows[0];
@@ -288,9 +275,7 @@ function buildGetBookQuery(isbn_number) {
                 WHERE b.isbn_number= '${isbn_number}' 
     `;
 
-
     return query;
-
 }
 
 
@@ -334,12 +319,10 @@ const updateBook = async (req, res) => {
         let deleteOldCategoriesQuery = `DELETE FROM book_categories WHERE isbn_number = '${isbn_number}'`;
         let deletedOldBookCategories = await dbQuery.query(deleteOldCategoriesQuery);
 
-
         updateBookQuery += updateBookAndInsertBookCategories(req, isbn_number)
 
         const updatedBookDBResponse = await dbQuery.query(updateBookQuery);
         const updatedBookRes = updatedBookDBResponse.rows;
-
 
         if (!updatedBookRes || updatedBookRes === null) {
             pool.query("ROLLBACK");
@@ -354,7 +337,6 @@ const updateBook = async (req, res) => {
             return res.status(status.error).send(errorMessage);
         }
 
-
         let getUpdatedBookQuery = `SELECT b.isbn_number, b.name as book_name, b.year_published, a.first_name as author_name, a.last_name as author_last_name,a.author_id 
         FROM books b
         JOIN authors AS a ON a.author_id = b.author
@@ -362,15 +344,12 @@ const updateBook = async (req, res) => {
 
         let updatedBook = await dbQuery.query(getUpdatedBookQuery);
 
-
         successMessage.data = updatedBook.rows[0];
         successMessage.data.categories = categories
         pool.query("COMMIT");
         delete successMessage.count
         return res.status(status.success).send(successMessage);
     } catch (error) {
-        console.log("UPDATE BOOKS ERROR")
-
         console.log(error);
         pool.query("ROLLBACK");
         errorMessage.error = 'Failed to update Book';
@@ -415,11 +394,7 @@ function updateBookAndInsertBookCategories(req, isbn_number) {
     query += values;
 
     query += ` RETURNING *;`;
-
-    // console.log(query);
-
     return query
-
 }
 
 async function getCategoriesByISBN(isbn_number) {
@@ -432,7 +407,6 @@ async function getCategoriesByISBN(isbn_number) {
 
         let categories = await dbQuery.query(query);
 
-        // console.log("NEW CATEGORIES RES: => ", categories)
         if (categories.rows) {
             return categories.rows
         } else {

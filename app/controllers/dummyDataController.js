@@ -5,8 +5,6 @@ import { empty, isEmpty } from '../helpers/validation';
 import { errorMessage, successMessage, status } from '../helpers/status';
 import pool from '../db/dev/pool';
 
-
-
 const loadDummyData = async (req, res) => {
     const { first_name, last_name } = req.body;
     console.log(`🗂️  => INSERTING DUMMY DATA ...`)

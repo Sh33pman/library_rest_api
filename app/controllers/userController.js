@@ -6,12 +6,10 @@ import {
 } from '../helpers/validation';
 import { errorMessage, successMessage, status } from '../helpers/status';
 
-
 const signupUser = async (req, res) => {
     const { email, name, username, password } = req.body;
 
     const hashedPassword = hashPassword(password);
-
 
     const createUserQuery = `INSERT INTO users(name, username, email, password) VALUES($1, $2, $3, $4)  returning *`;
     const values = [name, username, email, hashedPassword];
@@ -37,18 +35,7 @@ const signupUser = async (req, res) => {
         const token = generateUserToken(email, user_id, name, username);
 
         successMessage.data = dbResponse;
-        // successMessage.data.token = token;
         return res.status(status.created).send(successMessage);
-        // const { rows } = await dbQuery.query(createUserQuery, values);
-        // const dbResponse = rows[0];
-        // delete dbResponse.password;
-
-        // const { email, name, user_id, username, password } = dbResponse
-        // const token = generateUserToken(email, user_id, name, username);
-
-        // successMessage.data = dbResponse;
-        // successMessage.data.token = token;
-        // return res.status(status.created).send(successMessage);
 
     } catch (error) {
         if (error.routine === '_bt_check_unique') {
@@ -59,7 +46,6 @@ const signupUser = async (req, res) => {
         errorMessage.error = 'Operation was not successful';
         errorMessage.message = 'Operation was not successful';
         console.log(error.code)
-        // console.log(error);
         return res.status(status.error).send(errorMessage);
     }
 };
@@ -101,7 +87,6 @@ const siginUser = async (req, res) => {
 const getUser = async (req, res) => {
     const { user_id } = req.user;
 
-
     try {
         const getAllCategoriesQuery = `SELECT * FROM users WHERE user_id=$1 `;
         console.log(getAllCategoriesQuery)
@@ -110,16 +95,13 @@ const getUser = async (req, res) => {
         delete dbResponse.password;
         successMessage.data = dbResponse;
 
-        // console.log(successMessage)
         return res.status(status.success).send(successMessage);
     } catch (error) {
-        console.log("---------ERROR WHILE FETCHING USERS-----------")
         console.log(error)
         errorMessage.error = 'An error occured while trying to fetch users';
         return res.status(status.error).send(errorMessage);
     }
 };
-
 
 export {
     signupUser,

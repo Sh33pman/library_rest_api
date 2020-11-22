@@ -11,7 +11,6 @@ const createCategory = async (req, res) => {
     try {
         const createCategoryQuery = `INSERT INTO  categories( name, description,  operation_by_user) VALUES($1, $2, $3)
         returning *`;
-        // const values = [name, description, "Edvaldo"];
         const values = [name, description, req.user.username];
         const { rows } = await dbQuery.query(createCategoryQuery, values);
 
@@ -38,16 +37,11 @@ const getAllCategories = async (req, res) => {
     try {
         let getAllCategoriesQuery = buildGetAllCategoriesQuery(req.query);
 
-        // console.log(getAllCategoriesQuery)
         const { rows } = await dbQuery.query(getAllCategoriesQuery);
         const dbResponse = rows;
 
         let refactoredRes = refactorGetAllCategoriesRes(dbResponse)
 
-
-        // successMessage.data = dbResponse;
-        // successMessage.data = refactoredRes;
-        // successMessage.count = dbResponse[0].count || 0;
         successMessage.data = refactoredRes.data
         successMessage.count = refactoredRes.count
         return res.status(status.success).send(successMessage);
@@ -87,30 +81,17 @@ function buildGetAllCategoriesQuery(payload) {
 
     query += ` ORDER BY name DESC `;
 
-
-
-
     if (limit && parseInt(limit) !== -1) {
         query += ` LIMIT ${limit}`
         query += ` OFFSET ${offset}`
     }
 
-    // if (limit) {
-    //     query += ` LIMIT ${limit}`
-    // }
-
-    // if (offset) {
-    //     query += ` OFFSET ${offset}`
-    // }
-
-    // console.log(query)
     return query;
 
 }
 
 const getCategory = async (req, res) => {
     const { category_id } = req.params;
-
 
     try {
         const getAllCategoriesQuery = `SELECT * FROM categories WHERE category_id=$1 ORDER BY name DESC`;
@@ -120,7 +101,6 @@ const getCategory = async (req, res) => {
         delete dbResponse.count
         successMessage.data = dbResponse;
 
-        // console.log(successMessage)
         delete successMessage.count
         return res.status(status.success).send(successMessage);
     } catch (error) {
@@ -165,7 +145,6 @@ const updateCategory = async (req, res) => {
     const { name, description } = req.body;
 
     try {
-
         const updateCategory = `UPDATE categories SET name=$1, description=$2 , operation_by_user=$3 WHERE category_id=$4  returning *`;
         // const values = [name, description, "Edvaldo", category_id];
         const values = [name, description, req.user.username, category_id];

@@ -2,9 +2,6 @@
 import pool from './pool';
 var pgtools = require("pgtools");
 
-import dotenv from 'dotenv';
-import { query } from 'express';
-
 pool.on('connect', () => {
     console.log('Conneted to DB')
 });
@@ -33,9 +30,7 @@ const createUserTable = async () => {
 		date_time timestamp DEFAULT now()
     )`;
 
-
     return await usePool(createUserTableQuery)
-
 }
 
 const createAuthorTable = async () => {
@@ -305,7 +300,6 @@ async function CreateDatabase() {
             }
 
             return res;
-            //   console.log(res);
         });
 
     } catch (error) {
