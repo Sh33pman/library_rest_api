@@ -19,7 +19,6 @@ const createCategory = async (req, res) => {
         successMessage.data = dbResponse;
 
         console.log("CREATED CATEGORY: => ", dbResponse)
-
         return res.status(status.created).send(successMessage);
 
     } catch (error) {
@@ -117,10 +116,12 @@ const getCategory = async (req, res) => {
         const getAllCategoriesQuery = `SELECT * FROM categories WHERE category_id=$1 ORDER BY name DESC`;
         const { rows } = await dbQuery.query(getAllCategoriesQuery, [category_id]);
         const dbResponse = (rows && rows[0]) || {};
-
+        delete dbResponse.operation_by_user
+        delete dbResponse.count
         successMessage.data = dbResponse;
 
         // console.log(successMessage)
+        delete successMessage.count
         return res.status(status.success).send(successMessage);
     } catch (error) {
         console.log(error)
@@ -135,16 +136,21 @@ const deleteCategory = async (req, res) => {
 
     try {
         const deleteCategoryQuery = 'DELETE FROM categories WHERE category_id=$1 returning *';
-        const { rows } = await dbQuery.query(deleteCategoryQuery, [category_id]);
-        const dbResponse = rows[0];
+        const dbResponse = await dbQuery.query(deleteCategoryQuery, [category_id]);
 
-        if (!dbResponse) {
+        if (dbResponse && dbResponse.code === "23503") {
+            errorMessage.error = 'Cannot Delete this category because it is linked to other entities';
+            return res.status(status.notfound).send(errorMessage);
+        }
+
+        if (dbResponse.rows && dbResponse.rows.length === 0) {
             errorMessage.error = 'There is no category with this Id';
             return res.status(status.notfound).send(errorMessage);
         }
 
         successMessage.data = {};
         successMessage.data.message = 'Category deleted successfully';
+        delete successMessage.count
         return res.status(status.success).send(successMessage);
     } catch (error) {
         console.log(error)
@@ -171,7 +177,7 @@ const updateCategory = async (req, res) => {
             return res.status(status.error).send(errorMessage);
         }
 
-
+        delete successMessage.count
         successMessage.data = dbResult;
         return res.status(status.success).send(successMessage);
 

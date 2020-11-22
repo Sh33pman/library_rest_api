@@ -42,6 +42,7 @@ const createBook = async (req, res) => {
         successMessage.data = dbResponse;
         successMessage.data.categories = bookCategoryRes;
         pool.query("COMMIT");
+        delete successMessage.count
         return res.status(status.created).send(successMessage);
 
     } catch (error) {
@@ -255,6 +256,7 @@ const getBook = async (req, res) => {
         delete successMessage.count;
         successMessage.data = dbResponse || {};
         console.log(successMessage)
+        delete successMessage.count
         return res.status(status.success).send(successMessage);
 
     } catch (error) {
@@ -313,6 +315,7 @@ const deleteBook = async (req, res) => {
         successMessage.data = {};
         successMessage.data.message = 'Book deleted successfully';
         pool.query("COMMIT");
+        delete successMessage.count
         return res.status(status.success).send(successMessage);
     } catch (error) {
         console.log(error);
@@ -331,19 +334,16 @@ const updateBook = async (req, res) => {
         let deleteOldCategoriesQuery = `DELETE FROM book_categories WHERE isbn_number = '${isbn_number}'`;
         let deletedOldBookCategories = await dbQuery.query(deleteOldCategoriesQuery);
 
-        // console.log("DELETED CATEGORIES: => ", deletedOldBookCategories)
 
         updateBookQuery += updateBookAndInsertBookCategories(req, isbn_number)
 
         const updatedBookDBResponse = await dbQuery.query(updateBookQuery);
         const updatedBookRes = updatedBookDBResponse.rows;
 
-        // console.log("UPDATED BOOK RESPONSE: => ", updatedBookDBResponse)
 
         if (!updatedBookRes || updatedBookRes === null) {
             pool.query("ROLLBACK");
             errorMessage.error = 'Failed to update Book';
-            // errorMessage.error = 'Failed to update Book. ISBN was not found';
             return res.status(status.error).send(errorMessage);
         }
 
@@ -354,7 +354,6 @@ const updateBook = async (req, res) => {
             return res.status(status.error).send(errorMessage);
         }
 
-        // console.log("INSERTED CATEGORIES => ", categories)
 
         let getUpdatedBookQuery = `SELECT b.isbn_number, b.name as book_name, b.year_published, a.first_name as author_name, a.last_name as author_last_name,a.author_id 
         FROM books b
@@ -363,11 +362,11 @@ const updateBook = async (req, res) => {
 
         let updatedBook = await dbQuery.query(getUpdatedBookQuery);
 
-        // console.log("UPDATED BOOK FETCHED => ", updatedBook)
 
         successMessage.data = updatedBook.rows[0];
         successMessage.data.categories = categories
         pool.query("COMMIT");
+        delete successMessage.count
         return res.status(status.success).send(successMessage);
     } catch (error) {
         console.log("UPDATE BOOKS ERROR")

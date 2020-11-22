@@ -105,6 +105,35 @@
                         "email": {
                             "type": "string",
                             "example": "edvaldod@impact.com"
+                        }
+                    }
+                }
+            }
+        },
+        "SignInUserResponse": {
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                },
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "user_id": {
+                            "type": "number",
+                            "example": 15
+                        },
+                        "name": {
+                            "type": "string",
+                            "example": "Edvaldo"
+                        },
+                        "username": {
+                            "type": "string",
+                            "example": "Domingos"
+                        },
+                        "email": {
+                            "type": "string",
+                            "example": "edvaldod@impact.com"
                         },
                         "token": {
                             "type": "string",
@@ -197,6 +226,10 @@
                             }
                         }
                     }
+                },
+                "count": {
+                    "type": "string",
+                    "example": "3"
                 }
             }
         },
@@ -431,10 +464,14 @@
                 "data": {
                     "type": "array",
                     "items": {
-                        "isbn_number": {
-                            "author": {
+                        "properties": {
+                            "isbn_number": {
                                 "type": "string",
-                                "example": "1471"
+                                "example": "201030"
+                            },
+                            "author_id": {
+                                "type": "number",
+                                "example": 12
                             },
                             "book_name": {
                                 "type": "string",
@@ -450,6 +487,10 @@
                                     "type": "object",
                                     "properties": {
                                         "name": {
+                                            "type": "string",
+                                            "example": "Action"
+                                        },
+                                        "category_id": {
                                             "type": "number",
                                             "example": 5
                                         }
@@ -466,6 +507,10 @@
                             }
                         }
                     }
+                },
+                "count": {
+                    "type": "string",
+                    "example": "3"
                 }
             }
         },
@@ -517,6 +562,99 @@
                             "example": "Book deleted successfully"
                         }
                     }
+                }
+            }
+        },
+        "GetLogsResponse": {
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "example": "success"
+                },
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "properties": {
+                            "id": {
+                                "type": "number",
+                                "example": 100
+                            },
+                            "tstamp": {
+                                "type": "string",
+                                "example": "2020-11-22T16:44:58.805Z"
+                            },
+                            "schemaname": {
+                                "type": "string",
+                                "example": "public"
+                            },
+                            "tabname": {
+                                "type": "string",
+                                "example": "books"
+                            },
+                            "operation": {
+                                "type": "string",
+                                "example": "UPDATE"
+                            },
+                            "who": {
+                                "type": "string",
+                                "example": "Edvaldo"
+                            },
+                            "new_val": {
+                                "type": "object",
+                                "properties": {
+                                    "isbn_number": {
+                                        "type": "string",
+                                        "example": "123"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Clean Code"
+                                    },
+                                    "author": {
+                                        "type": "string",
+                                        "example": 17
+                                    },
+                                    "year_published": {
+                                        "type": "number",
+                                        "example": "2019"
+                                    },
+                                    "operation_by_user": {
+                                        "type": "string",
+                                        "example": "Edvaldo"
+                                    }
+                                }
+                            },
+                            "old_val": {
+                                "type": "object",
+                                "properties": {
+                                    "isbn_number": {
+                                        "type": "string",
+                                        "example": "123"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "The code"
+                                    },
+                                    "author": {
+                                        "type": "string",
+                                        "example": 5
+                                    },
+                                    "year_published": {
+                                        "type": "number",
+                                        "example": "2015"
+                                    },
+                                    "operation_by_user": {
+                                        "type": "string",
+                                        "example": "Edvaldo"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "count": {
+                    "type": "string",
+                    "example": "1"
                 }
             }
         }
@@ -582,7 +720,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/definitions/CreateUserResponse"
+                                    "$ref": "#/definitions/SignInUserResponse"
                                 }
                             }
                         }
@@ -999,7 +1137,7 @@
                         "description": "the category of the book",
                         "required": false,
                         "type": "string",
-                        "example": "Action"
+                        "example": "Commedy"
                     },
                     {
                         "name": "book_name",
@@ -1013,42 +1151,48 @@
                         "in": "query",
                         "description": "the first name of the author",
                         "required": false,
-                        "type": "string"
+                        "type": "string",
+                        "example": "1"
                     },
                     {
                         "name": "author_last_name",
                         "in": "query",
                         "description": "the last name of the author",
                         "required": false,
-                        "type": "string"
+                        "type": "string",
+                        "example": "Domingos"
                     },
                     {
                         "name": "isbn_number",
                         "in": "query",
                         "description": "the ISBN number",
                         "required": false,
-                        "type": "string"
+                        "type": "string",
+                        "example": "Edvaldo"
                     },
                     {
                         "name": "year_published",
                         "in": "query",
                         "description": "the Year published",
                         "required": false,
-                        "type": "string"
+                        "type": "string",
+                        "example": "2020"
                     },
                     {
                         "name": "limit",
                         "in": "query",
                         "description": "number of items to fetch",
                         "required": true,
-                        "type": "number"
+                        "type": "number",
+                        "example": 25
                     },
                     {
                         "name": "offset",
                         "in": "query",
                         "description": "the row number from where you want to start fetching",
                         "required": true,
-                        "type": "number"
+                        "type": "number",
+                        "example": 0
                     }
                 ],
                 "security": [
@@ -1201,7 +1345,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/definitions/GetAuthorsResponse"
+                                    "$ref": "#/definitions/GetLogsResponse"
                                 }
                             }
                         }

@@ -17,6 +17,7 @@ const createAuthor = async (req, res) => {
         const dbResponse = rows[0];
         successMessage.data = dbResponse;
 
+        delete successMessage.count
         return res.status(status.created).send(successMessage);
 
     } catch (error) {
@@ -123,6 +124,7 @@ const getAuthor = async (req, res) => {
             return res.status(status.bad).send(errorMessage);
         }
 
+        delete successMessage.count
         successMessage.data = dbResponse[0];
         return res.status(status.success).send(successMessage);
     } catch (error) {
@@ -138,16 +140,23 @@ const deleteAuthor = async (req, res) => {
 
     try {
         const deleteAuthorQuery = 'DELETE FROM authors WHERE author_id=$1 returning *';
-        const { rows } = await dbQuery.query(deleteAuthorQuery, [author_id]);
-        const dbResponse = rows[0];
+        // const { rows } = await dbQuery.query(deleteAuthorQuery, [author_id]);
+        // const dbResponse = rows[0];
+        const dbResponse = await dbQuery.query(deleteAuthorQuery, [author_id]);
 
-        if (!dbResponse) {
+        if (dbResponse && dbResponse.code === "23503") {
+            errorMessage.error = 'Cannot Delete this author because it is linked to other entities';
+            return res.status(status.notfound).send(errorMessage);
+        }
+
+        if (dbResponse.rows && dbResponse.rows.length === 0) {
             errorMessage.error = 'There is no author with this Id';
             return res.status(status.notfound).send(errorMessage);
         }
 
         successMessage.data = {};
         successMessage.data.message = 'Author deleted successfully';
+        delete successMessage.count
         return res.status(status.success).send(successMessage);
     } catch (error) {
         console.log(error)
@@ -173,6 +182,8 @@ const updateAuthor = async (req, res) => {
             return res.status(status.error).send(errorMessage);
         }
 
+
+        delete successMessage.count
         successMessage.data = dbResult;
         return res.status(status.success).send(successMessage);
 
