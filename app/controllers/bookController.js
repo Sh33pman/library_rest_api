@@ -87,40 +87,33 @@ const getAllBooks = async (req, res) => {
     const { limit, offset } = req.query;
 
     try {
-        let getAllBooksQuery = `select b.isbn_number, b.name as book_name, b.year_published,
-		a.first_name as author_name, a.last_name as author_last_name,
-		c.category_id, c.name as category_name, c.description as category_description
-FROM books AS b 
-JOIN authors AS a ON b.author = a.author_id
-JOIN book_categories AS bc ON bc.isbn_number = b.isbn_number
-JOIN categories AS c ON c.category_id = bc.category_id
-WHERE  	1=1 `;
+        let getAllBooksQuery = ``;
 
         if (isSearchCriteriaProvided(req.query)) {
-            getAllBooksQuery += `AND (`
             getAllBooksQuery += buildSearchCriteriaQuery(req.query)
-            getAllBooksQuery += `)`;
+        } else {
+            getAllBooksQuery += buildSearchBooksQueryWithoutSearchPArams();
         }
 
-        getAllBooksQuery += ` ORDER BY b.name DESC `;
+        getAllBooksQuery += ` ORDER BY b.name ASC `;
 
-        if (limit) {
+        if (limit && parseInt(limit) !== -1) {
             getAllBooksQuery += ` LIMIT ${limit}`
-        }
-
-        if (offset) {
             getAllBooksQuery += ` OFFSET ${offset}`
         }
 
 
-        console.log(getAllBooksQuery)
+
+        console.log("GET ALL BOOKS => ", getAllBooksQuery)
 
         const { rows } = await dbQuery.query(getAllBooksQuery);
 
         let refactoredRes = refactorRows(rows)
 
+        successMessage.count = (rows && rows.length) || 0
+        // successMessage.count = (rows && rows[0] && rows[0].full_count) || 0
         successMessage.data = refactoredRes;
-        successMessage.count = refactoredRes.length
+        // successMessage.data = rows;
 
         return res.status(status.success).send(successMessage);
     } catch (error) {
@@ -129,36 +122,92 @@ WHERE  	1=1 `;
         return res.status(status.error).send(errorMessage);
     }
 }
+function buildSearchBooksQueryWithoutSearchPArams() {
+    let query = ` SELECT b.isbn_number, b.name as book_name, b.author as author_id, b.year_published
+    ,a.first_name as author_name, a.last_name as author_last_name , categoriesByIsbnResult.categories
+    , count(*) OVER() AS full_count
+    FROM books AS b 
+    JOIN authors AS a ON a.author_id = b.author 
+    JOIN (
+                SELECT 
+                t.isbn_number,
+                array_to_json(array_agg(t)) AS categories
+            FROM (
+                SELECT c.category_id
+                ,bc.isbn_number
+                , c.name
+                FROM book_categories  AS bc
+                JOIN categories AS c ON bc.category_id = c.category_id
+                WHERE 1 = 1 
+            ) as t 
+            GROUP BY t.isbn_number
+              ) AS categoriesByIsbnResult
+    ON b.isbn_number = categoriesByIsbnResult.isbn_number
+     WHERE 1 = 1  
+    `;
+
+    return query;
+}
 
 function buildSearchCriteriaQuery(parms) {
     const { author_first_name, author_last_name, category, book_name, isbn_number, year_published, limit, offset } = parms
-    let searchCriteria = ``;
-
-    if (author_first_name) {
-        searchCriteria += `LOWER(a.first_name) LIKE LOWER('%${author_first_name}%') `
+    let query = ` SELECT b.isbn_number, b.name as book_name, b.author as author_id, b.year_published
+    ,a.first_name as author_name, a.last_name as author_last_name , categoriesByIsbnResult.categories
+    , count(*) OVER() AS full_count
+    FROM books AS b 
+    JOIN authors AS a ON a.author_id = b.author 
+    JOIN (
+                SELECT 
+                t.isbn_number,
+                array_to_json(array_agg(t)) AS categories
+            FROM (
+                SELECT c.category_id
+                ,bc.isbn_number
+                , c.name
+                FROM book_categories  AS bc
+                JOIN categories AS c ON bc.category_id = c.category_id
+                WHERE 1 = 1 `;
+    if (category && category !== "") {
+        query += ` AND (LOWER(c.name) LIKE LOWER('%${category}%')) `
     }
 
-    if (author_last_name) {
-        searchCriteria += ` ${searchCriteria !== '' ? "OR " : ""} LOWER(a.last_name) LIKE LOWER('%${author_last_name}%') `
+    query += `) as t 
+    GROUP BY t.isbn_number
+      ) AS categoriesByIsbnResult `
+
+    query += ` ON b.isbn_number = categoriesByIsbnResult.isbn_number
+     WHERE 1 = 1 `;
+
+
+    let searchParams = ``
+    if (!(isEmpty(author_first_name) && isEmpty(author_last_name) && isEmpty(book_name) && isEmpty(isbn_number) && isEmpty(year_published))) {
+        searchParams += `AND ( `;
+
+        if (author_first_name && author_first_name !== "") {
+            searchParams += `LOWER(a.first_name) LIKE LOWER('%${author_first_name}%') `
+        }
+
+        if (author_last_name && author_last_name !== "") {
+            searchParams += ` ${searchParams !== `AND ( ` ? "AND " : ""} LOWER(a.last_name) LIKE LOWER('%${author_last_name}%') `
+        }
+
+        if (book_name && book_name !== "") {
+            searchParams += `${searchParams !== `AND ( ` ? "AND " : ""} LOWER(b.name) LIKE LOWER('%${book_name}%')`
+        }
+
+        if (isbn_number && isbn_number !== "") {
+            searchParams += `${searchParams !== `AND ( ` ? "AND " : ""} b.isbn_number LIKE '%${isbn_number}%' `
+        }
+
+        if (year_published && year_published !== "") {
+            searchParams += ` ${searchParams !== `AND ( ` ? "AND " : ""} b.year_published LIKE '%${year_published}%' `
+        }
+
+        searchParams += `)`
     }
 
-    if (book_name) {
-        searchCriteria += `${searchCriteria !== '' ? "OR " : ""} LOWER(b.name) LIKE LOWER('%${book_name}%')`
-    }
-
-    if (category) {
-        searchCriteria += `${searchCriteria !== '' ? "OR " : ""} LOWER(c.name) LIKE LOWER('%${category}%')`
-    }
-
-    if (isbn_number) {
-        searchCriteria += `${searchCriteria !== '' ? "OR " : ""} b.isbn_number LIKE '%${isbn_number}%' `
-    }
-
-    if (year_published) {
-        searchCriteria += ` ${searchCriteria !== '' ? "OR " : ""} b.year_published LIKE '%${year_published}%' `
-    }
-
-    return searchCriteria;
+    query += searchParams
+    return query;
 }
 
 function isSearchCriteriaProvided(params) {
@@ -169,31 +218,12 @@ function isSearchCriteriaProvided(params) {
 }
 
 function refactorRows(rows) {
+    (rows || []).map(item => {
+        delete item.full_count
+        return item
+    })
 
-    let books = [];
-
-    (rows || []).forEach((book, idx) => {
-        let isBookFound = books.findIndex(b => b.isbn_number === book.isbn_number);
-        if (isBookFound > -1) {
-            books[isBookFound].categories.push({
-                category_id: book.category_id,
-                name: book.category_name,
-                description: book.category_description
-            })
-        } else {
-            book.categories = [
-                {
-                    category_id: book.category_id,
-                    name: book.category_name,
-                    description: book.category_description
-                }
-            ];
-            books.push(book)
-        }
-    });
-
-
-    return books
+    return rows
 
 }
 
@@ -206,28 +236,10 @@ const getBook = async (req, res) => {
         const { rows } = await dbQuery.query(getAllBooksQuery);
         const dbResponse = rows[0];
 
-        // let categories = await getCategoriesByISBN(isbn_number)
-        // if (categories && categories.length > 0) {
-        //     dbResponse.categories = categories
-        // }
-
         delete successMessage.count;
         successMessage.data = dbResponse || {};
         console.log(successMessage)
         return res.status(status.success).send(successMessage);
-        // const getAllBooksQuery = `SELECT * FROM books WHERE isbn_number=$1`;
-        // const { rows } = await dbQuery.query(getAllBooksQuery, [isbn_number]);
-        // const dbResponse = rows[0];
-
-        // let categories = await getCategoriesByISBN(isbn_number)
-        // if (categories && categories.length > 0) {
-        //     dbResponse.categories = categories
-        // }
-
-        // delete successMessage.count;
-        // successMessage.data = dbResponse || {};
-        // console.log(successMessage)
-        // return res.status(status.success).send(successMessage);
 
     } catch (error) {
         console.log(error)
@@ -263,23 +275,6 @@ function buildGetBookQuery(isbn_number) {
 
 }
 
-// async function getCategoriesByISBN(isbn_number) {
-
-//     try {
-
-//         let insertBookCategoryQuery = `SELECT c.category_id , c.name, c.description 
-//         FROM book_categories AS bc
-//         JOIN categories AS c ON c.category_id = bc.category_id
-//         JOIN authors AS a ON a.author_id = 
-//         WHERE isbn_number = $1`;
-//         const { rows } = await dbQuery.query(insertBookCategoryQuery, [isbn_number]);
-//         return rows
-//     } catch (error) {
-//         console.log("Failed to get All categories")
-//         console.log(error)
-//         return [];
-//     }
-// }
 
 const deleteBook = async (req, res) => {
     const { isbn_number } = req.params;
@@ -437,96 +432,7 @@ async function getCategoriesByISBN(isbn_number) {
     }
 
 }
-// const updateBook = async (req, res) => {
-//     const { isbn_number } = req.params;
 
-//     try {
-//         await pool.query("BEGIN");
-//         let updateBookQuery = ``;
-//         updateBookQuery += buildUpdateBookQuery(req, isbn_number)
-
-//         const response = await dbQuery.query(updateBookQuery);
-//         const dbResult = response.rows[0];
-//         successMessage.data = dbResult;
-
-//         let categories = await updateBookCategories(req, isbn_number)
-
-
-//         if (!dbResult || dbResult === null) {
-//             pool.query("ROLLBACK");
-//             errorMessage.error = 'Failed to update Book. ISBN was not found';
-//             return res.status(status.error).send(errorMessage);
-//         }
-
-//         if (!categories || categories === null) {
-//             pool.query("ROLLBACK");
-//             errorMessage.error = 'Failed to update Book';
-//             return res.status(status.error).send(errorMessage);
-//         }
-
-//         successMessage.data.categories = categories
-//         pool.query("COMMIT");
-//         return res.status(status.success).send(successMessage);
-//     } catch (error) {
-//         console.log("UPDATE BOOKS ERROR")
-
-//         console.log(error);
-//         pool.query("ROLLBACK");
-//         errorMessage.error = 'Failed to update Book';
-//         return res.status(status.error).send(errorMessage);
-//     }
-// };
-
-// function buildUpdateBookQuery(req, isbn_number) {
-//     const { author, name, categories, year_published } = req.body;
-//     let updateBookQuery = `UPDATE books SET `;
-
-//     if (author) {
-//         updateBookQuery += ` author = ${author}, `;
-//     }
-
-//     updateBookQuery += ` operation_by_user = '${req.user.username}', `;
-
-//     if (name) {
-//         updateBookQuery += ` name = '${name}', `;
-//     }
-
-//     if (year_published) {
-//         updateBookQuery += ` year_published = '${year_published}'`;
-//     }
-
-//     updateBookQuery = updateBookQuery.replace(/,\s*$/, "");
-
-
-//     updateBookQuery += ` WHERE isbn_number = '${isbn_number}'  returning *`;
-//     return updateBookQuery;
-// }
-
-// async function updateBookCategories(req, isbn_number) {
-//     const { categories } = req.body;
-//     try {
-//         let values = ``;
-//         (categories || []).forEach(item => {
-//             values += `(${item.new}, ${isbn_number}, ${item.old}, '${req.user.username}'),`
-//         });
-
-//         values = values.replace(/,\s*$/, "");
-
-//         let updateBookCategoryQuery = `update public.book_categories as bc set
-//         category_id = c.category_id, operation_by_user = c.operation_by_user 
-//         from (values ${values}) as c(category_id, isbn_number, old_category_id, operation_by_user) 
-//         where bc.isbn_number::int = c.isbn_number AND c.old_category_id = bc.category_id returning *`;
-
-
-//         const { rows } = await dbQuery.query(updateBookCategoryQuery);
-//         let result = (rows || []).map(item => item.category_id)
-//         return result;
-//     } catch (error) {
-//         console.log("UPDATE BOOKS CATEGORY ERROR")
-//         console.log(error);
-//         return null
-//     }
-// }
 
 export {
     createBook,

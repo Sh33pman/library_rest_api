@@ -1018,21 +1018,21 @@
                     {
                         "name": "author_last_name",
                         "in": "query",
-                        "description": "the first last name of the author",
+                        "description": "the last name of the author",
                         "required": false,
                         "type": "string"
                     },
                     {
                         "name": "isbn_number",
                         "in": "query",
-                        "description": "the first name of the author",
+                        "description": "the ISBN number",
                         "required": false,
                         "type": "string"
                     },
                     {
                         "name": "year_published",
                         "in": "query",
-                        "description": "the first name of the author",
+                        "description": "the Year published",
                         "required": false,
                         "type": "string"
                     },
