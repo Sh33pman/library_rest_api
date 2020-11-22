@@ -15,8 +15,22 @@ const createBook = async (req, res) => {
         const createBookQuery = `INSERT INTO  books(isbn_number, name, author, year_published, operation_by_user) VALUES($1, $2, $3, $4, $5) returning *`;
         const values = [isbn_number, name, author, year_published, req.user.username];
 
-        const { rows } = await dbQuery.query(createBookQuery, values);
-        const dbResponse = rows[0];
+        const inserBookDBResponse = await dbQuery.query(createBookQuery, values);
+        if (inserBookDBResponse.code === '23505') {
+            let message = inserBookDBResponse.constraint === "books_pkey" ? "ISBN number was already taken. Plese select another one" : "Failed to Create a book please revise you values"
+            console.log("======================  CREATE BOOK ERROR ================ \n", inserBookDBResponse)
+            errorMessage.error = message;
+            pool.query("ROLLBACK");
+            return res.status(status.conflict).send(errorMessage);
+        }
+
+        // if (rows.length === 0) {
+        //     errorMessage.error = 'Failed to ';
+        //     return res.status(status.conflict).send(errorMessage);
+        // }
+        console.log(inserBookDBResponse)
+
+        const dbResponse = (inserBookDBResponse && inserBookDBResponse.rows && inserBookDBResponse.rows[0]) || null;
 
         let bookCategoryRes = await insertBookCategory(req, res);
 
@@ -104,15 +118,16 @@ const getAllBooks = async (req, res) => {
 
 
 
-        console.log("GET ALL BOOKS => ", getAllBooksQuery)
+        console.log("===================GET ALL BOOKS ====================== \n ", getAllBooksQuery)
 
         const { rows } = await dbQuery.query(getAllBooksQuery);
 
+        let count = (rows && rows[0] && rows[0].full_count) || 0
         let refactoredRes = refactorRows(rows)
 
-        successMessage.count = (rows && rows.length) || 0
-        // successMessage.count = (rows && rows[0] && rows[0].full_count) || 0
+        // successMessage.count = (rows && rows.length) || 0
         successMessage.data = refactoredRes;
+        successMessage.count = count
         // successMessage.data = rows;
 
         return res.status(status.success).send(successMessage);
@@ -218,12 +233,14 @@ function isSearchCriteriaProvided(params) {
 }
 
 function refactorRows(rows) {
-    (rows || []).map(item => {
+    let books = [];
+
+    (rows || []).forEach(item => {
         delete item.full_count
-        return item
+        books.push(item)
     })
 
-    return rows
+    return books
 
 }
 
