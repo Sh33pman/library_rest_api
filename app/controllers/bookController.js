@@ -4,7 +4,6 @@ import dbQuery from '../db/dev/db_Query';
 import { empty, isEmpty } from '../helpers/validation';
 import { errorMessage, successMessage, status } from '../helpers/status';
 import pool from '../db/dev/pool';
-import { query } from 'express';
 
 const createBook = async (req, res) => {
     const { author, name, categories, isbn_number, year_published } = req.body;
