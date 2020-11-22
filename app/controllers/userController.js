@@ -37,7 +37,7 @@ const signupUser = async (req, res) => {
         const token = generateUserToken(email, user_id, name, username);
 
         successMessage.data = dbResponse;
-        successMessage.data.token = token;
+        // successMessage.data.token = token;
         return res.status(status.created).send(successMessage);
         // const { rows } = await dbQuery.query(createUserQuery, values);
         // const dbResponse = rows[0];
